@@ -6,9 +6,10 @@ use axum::{
     routing::get,
     Router,
 };
+use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, error::Error, net::SocketAddr, sync::RwLock};
-use std::{fs, sync::Arc};
+use std::{fs, str, sync::Arc};
 use tera::{Context, Tera};
 
 const ACCESS_TOKEN: &str = "access_token";
@@ -75,11 +76,18 @@ async fn index(State(state): State<SharedState>) -> Result<Html<String>, AppErro
         state.read().unwrap().db.get(ID_TOKEN),
     ) {
         (Some(access_token), Some(id_token)) => {
+            let claims_part = id_token.split('.').collect::<Vec<_>>()[1];
+            let claims_json =
+                std::str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
+            let claims: IdToken = serde_json::from_str(&claims_json)?;
+            let pid = claims.pid;
+
             Ok(Html(state.read().unwrap().config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
                     access_token: access_token.to_string(),
                     id_token: id_token.to_string(),
+                    pid,
                 })?,
             )?))
         }
@@ -178,10 +186,16 @@ struct TokenResponse {
     id_token: String,
 }
 
+#[derive(Deserialize)]
+struct IdToken {
+    pid: String,
+}
+
 #[derive(Serialize)]
 struct Authenticated {
     access_token: String,
     id_token: String,
+    pid: String,
 }
 
 #[derive(Deserialize)]
