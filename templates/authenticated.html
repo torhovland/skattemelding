@@ -10,5 +10,10 @@
     <pre>{{partsnummer}}</pre>
     <p>Valideringsresultat:</p>
     <pre>{{validation}}</pre>
+
+    {% for dokument in dokumenter -%}
+    <p>Dokument:</p>
+    <pre>{{dokument}}</pre>
+    {%- endfor %}
   </body>
 </html>

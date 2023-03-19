@@ -88,7 +88,7 @@ Base64 decode <content>:
 
 <partsnummer> trengs seinare.
 
-Base64 encode skattemelding.xml og naeringspesifikasjon.xml og lag melding som dette:
+Base64 encode skattemelding.xml og naeringsspesifikasjon.xml og lag melding som dette:
 
 naering_as = """
 

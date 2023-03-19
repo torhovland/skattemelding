@@ -188,6 +188,36 @@ async fn index(
             let bytes = buf.into_inner()?;
             let validation = String::from_utf8(bytes)?;
 
+            let dokumenter: Vec<_> = validation_xml
+                .get_child("dokumenter")
+                .ok_or_else(|| anyhow!("Did not find 'dokumenter' in XML structure"))?
+                .children
+                .iter()
+                .map(|d| {
+                    let encoded = d
+                        .as_element()
+                        .unwrap()
+                        .get_child("content")
+                        .unwrap()
+                        .get_text()
+                        .unwrap();
+
+                    let decoded = str::from_utf8(&BASE64.decode(encoded.as_bytes()).unwrap())
+                        .unwrap()
+                        .to_string();
+
+                    let xml = Element::parse(decoded.as_bytes()).unwrap();
+
+                    let mut cfg = EmitterConfig::new();
+                    cfg.perform_indent = true;
+
+                    let mut buf = BufWriter::new(Vec::new());
+                    xml.write_with_config(&mut buf, cfg).unwrap();
+                    let bytes = buf.into_inner().unwrap();
+                    String::from_utf8(bytes).unwrap()
+                })
+                .collect();
+
             Ok(Html(config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
@@ -195,6 +225,7 @@ async fn index(
                     dok_ref,
                     partsnummer,
                     validation,
+                    dokumenter,
                 })?,
             )?))
         }
@@ -289,6 +320,7 @@ struct Authenticated {
     dok_ref: String,
     partsnummer: String,
     validation: String,
+    dokumenter: Vec<String>,
 }
 
 #[derive(Deserialize)]
