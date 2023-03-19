@@ -1,15 +1,17 @@
 use anyhow::anyhow;
 use axum::{
+    debug_handler,
     extract::{Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
     Router,
 };
+use axum_sessions::{async_session, extractors::WritableSession, SameSite, SessionLayer};
+use chrono::{Datelike, Utc};
 use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, error::Error, net::SocketAddr, sync::RwLock};
-use std::{fs, str, sync::Arc};
+use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
 
 const ACCESS_TOKEN: &str = "access_token";
@@ -19,24 +21,9 @@ const ID_TOKEN: &str = "id_token";
 pub struct Config {
     pub tera: Tera,
     pub client_secret: String,
+    pub org_number: String,
+    pub year: i32,
 }
-
-#[derive(Clone)]
-struct AppState {
-    config: Config,
-    db: HashMap<&'static str, String>,
-}
-
-impl AppState {
-    fn new(config: Config) -> Self {
-        AppState {
-            config,
-            db: HashMap::<&str, String>::default(),
-        }
-    }
-}
-
-type SharedState = Arc<RwLock<AppState>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -48,18 +35,25 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tracing::info!("Reading {SECRET_FILE_NAME}");
     let client_secret = fs::read_to_string(SECRET_FILE_NAME)?;
 
+    let store = async_session::MemoryStore::new();
+    let secret = b"aAog7DZJZnY6C4J8v0W81NizvjPv3UHHXP9pAJLxV4srnjsTONy5zOXgqPCuaihG";
+
+    // Lax policy, otherwise redirecting to root after auth doesn't work.
+    let session_layer = SessionLayer::new(store, secret).with_same_site_policy(SameSite::Lax);
+
     let config = Config {
         tera,
         client_secret,
+        org_number: "999579922".to_string(),
+        year: Utc::now().date_naive().year() - 1,
     };
-
-    let shared_state = Arc::new(RwLock::new(AppState::new(config)));
 
     let app = Router::new()
         .route("/", get(index))
         .route("/logginn", get(logginn))
         .route("/token", get(token))
-        .with_state(shared_state);
+        .layer(session_layer)
+        .with_state(config);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 12345));
     tracing::info!("listening on {}", addr);
@@ -70,11 +64,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn index(State(state): State<SharedState>) -> Result<Html<String>, AppError> {
-    match (
-        state.read().unwrap().db.get(ACCESS_TOKEN),
-        state.read().unwrap().db.get(ID_TOKEN),
-    ) {
+#[debug_handler]
+async fn index(
+    State(config): State<Config>,
+    session: WritableSession,
+) -> Result<Html<String>, AppError> {
+    let access_token: Option<String> = session.get(ACCESS_TOKEN);
+    let id_token: Option<String> = session.get(ID_TOKEN);
+
+    match (access_token, id_token) {
         (Some(access_token), Some(id_token)) => {
             let claims_part = id_token.split('.').collect::<Vec<_>>()[1];
             let claims_json =
@@ -82,23 +80,29 @@ async fn index(State(state): State<SharedState>) -> Result<Html<String>, AppErro
             let claims: IdToken = serde_json::from_str(&claims_json)?;
             let pid = claims.pid;
 
-            Ok(Html(state.read().unwrap().config.tera.render(
+            let utkast = reqwest::Client::new()
+                .get(format!(
+                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/utkast/{}/{}",
+                    config.year, config.org_number
+                ))
+                .header("Authorization", format!("Bearer {access_token}"))
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            Ok(Html(config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
-                    access_token: access_token.to_string(),
-                    id_token: id_token.to_string(),
+                    access_token,
+                    id_token,
                     pid,
+                    utkast,
                 })?,
             )?))
         }
-        _ => Ok(Html(
-            state
-                .read()
-                .unwrap()
-                .config
-                .tera
-                .render("guest.html", &Context::new())?,
-        )),
+        _ => Ok(Html(config.tera.render("guest.html", &Context::new())?)),
     }
 }
 
@@ -109,8 +113,9 @@ async fn logginn() -> Redirect {
 
 /// Using client defined at
 /// https://selvbetjening-samarbeid-prod.difi.no/integrations/4060f6d4-28ab-410d-bf14-edd62aa88dcf
-async fn token<'a>(
-    State(state): State<SharedState>,
+async fn token(
+    State(config): State<Config>,
+    mut session: WritableSession,
     Query(query_params): Query<QueryParams>,
 ) -> Result<Redirect, AppError> {
     let form_params = [
@@ -119,10 +124,7 @@ async fn token<'a>(
             "client_id",
             "4060f6d4-28ab-410d-bf14-edd62aa88dcf".to_string(),
         ),
-        (
-            "client_secret",
-            state.read().unwrap().config.client_secret.clone(),
-        ),
+        ("client_secret", config.client_secret.clone()),
         (
             "code_verifier",
             "HalCZ880JLh4IiV0JOTEJc9E_7ghoc1qCQTK2kSSsaE".to_string(),
@@ -135,6 +137,7 @@ async fn token<'a>(
         .form(&form_params)
         .send()
         .await?
+        .error_for_status()?
         .text()
         .await?;
 
@@ -146,16 +149,9 @@ async fn token<'a>(
         Ok(token_response) => {
             tracing::info!("Access token: {}", token_response.access_token);
             tracing::info!("Id token: {}", token_response.id_token);
-            state
-                .write()
-                .unwrap()
-                .db
-                .insert(ACCESS_TOKEN, token_response.access_token);
-            state
-                .write()
-                .unwrap()
-                .db
-                .insert(ID_TOKEN, token_response.id_token);
+
+            session.insert(ACCESS_TOKEN, token_response.access_token)?;
+            session.insert(ID_TOKEN, token_response.id_token)?;
 
             Ok(Redirect::permanent("/"))
         }
@@ -196,6 +192,7 @@ struct Authenticated {
     access_token: String,
     id_token: String,
     pid: String,
+    utkast: String,
 }
 
 #[derive(Deserialize)]
