@@ -11,9 +11,9 @@ use axum_sessions::{async_session, extractors::WritableSession, SameSite, Sessio
 use chrono::{Datelike, Utc};
 use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs, net::SocketAddr, str};
+use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
-use xmltree::Element;
+use xmltree::{Element, EmitterConfig};
 
 const ACCESS_TOKEN: &str = "access_token";
 const ID_TOKEN: &str = "id_token";
@@ -125,12 +125,76 @@ async fn index(
                 .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?
                 .to_string();
 
+            let skattemelding = fs::read_to_string(format!("{}/skattemelding.xml", config.year))?;
+            let skattemelding_base64 = BASE64.encode(skattemelding.as_bytes());
+
+            let naeringsspesifikasjon =
+                fs::read_to_string(format!("{}/naeringsspesifikasjon.xml", config.year))?;
+            let naeringsspesifikasjon_base64 = BASE64.encode(naeringsspesifikasjon.as_bytes());
+
+            let konvolutt = format!(
+                r#"<?xml version="1.0" encoding="utf-8" ?>
+            <skattemeldingOgNaeringsspesifikasjonRequest xmlns="no:skatteetaten:fastsetting:formueinntekt:skattemeldingognaeringsspesifikasjon:request:v2">
+                <dokumenter>
+                    <dokument>
+                        <type>skattemeldingUpersonlig</type>
+                        <encoding>utf-8</encoding>
+                        <content>{}</content>
+                    </dokument>
+                    <dokument>
+                        <type>naeringsspesifikasjon</type>
+                        <encoding>utf-8</encoding>
+                        <content>{}</content>
+                    </dokument>
+                </dokumenter>
+                <dokumentreferanseTilGjeldendeDokument>
+                    <dokumenttype>skattemeldingUpersonlig</dokumenttype>
+                    <dokumentidentifikator>{}</dokumentidentifikator>
+                </dokumentreferanseTilGjeldendeDokument>
+                <inntektsaar>{}</inntektsaar>
+                <innsendingsinformasjon>
+                    <innsendingstype>komplett</innsendingstype>
+                    <opprettetAv>Tor Hovland</opprettetAv>
+                </innsendingsinformasjon>
+            </skattemeldingOgNaeringsspesifikasjonRequest>"#,
+                skattemelding_base64, naeringsspesifikasjon_base64, dok_ref, config.year
+            );
+
+            tracing::info!("Konvolutt: {konvolutt}");
+
+            let validation_response = reqwest::Client::new()
+                .post(format!(
+                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/valider/{}/{}",
+                    config.year, config.org_number
+                ))
+                .header("Authorization", format!("Bearer {access_token}"))
+                .header("Content-Type", "application/xml")
+                .body(konvolutt)
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            tracing::info!("Validation response: {}", validation_response);
+
+            let validation_xml = Element::parse(validation_response.as_bytes())?;
+
+            let mut cfg = EmitterConfig::new();
+            cfg.perform_indent = true;
+
+            let mut buf = BufWriter::new(Vec::new());
+            validation_xml.write_with_config(&mut buf, cfg)?;
+            let bytes = buf.into_inner()?;
+            let validation = String::from_utf8(bytes)?;
+
             Ok(Html(config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
                     pid,
                     dok_ref,
                     partsnummer,
+                    validation,
                 })?,
             )?))
         }
@@ -224,6 +288,7 @@ struct Authenticated {
     pid: String,
     dok_ref: String,
     partsnummer: String,
+    validation: String,
 }
 
 #[derive(Deserialize)]
