@@ -13,6 +13,7 @@ use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
+use xmltree::Element;
 
 const ACCESS_TOKEN: &str = "access_token";
 const ID_TOKEN: &str = "id_token";
@@ -92,13 +93,24 @@ async fn index(
                 .text()
                 .await?;
 
+            tracing::info!("Utkast: {utkast}");
+
+            let el = Element::parse(utkast.as_bytes())?;
+            let dok_ref = &el
+                .get_child("dokumenter")
+                .ok_or_else(|| anyhow!("Did not find 'dokumenter' in XML structure"))?
+                .get_child("skattemeldingdokument")
+                .ok_or_else(|| anyhow!("Did not find 'skattemeldingdokument' in XML structure"))?
+                .get_child("id")
+                .ok_or_else(|| anyhow!("Did not find 'id' in XML structure"))?
+                .get_text()
+                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?;
+
             Ok(Html(config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
-                    access_token,
-                    id_token,
                     pid,
-                    utkast,
+                    dok_ref: dok_ref.to_string(),
                 })?,
             )?))
         }
@@ -189,10 +201,8 @@ struct IdToken {
 
 #[derive(Serialize)]
 struct Authenticated {
-    access_token: String,
-    id_token: String,
     pid: String,
-    utkast: String,
+    dok_ref: String,
 }
 
 #[derive(Deserialize)]

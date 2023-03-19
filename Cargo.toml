@@ -16,3 +16,4 @@ tera = { version = "1.18.1", default-features = false }
 tokio = { version = "1.26.0", features = ["macros", "rt-multi-thread"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+xmltree = "0.10.3"
