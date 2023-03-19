@@ -9,7 +9,7 @@ use axum::{
 };
 use axum_sessions::{async_session, extractors::WritableSession, SameSite, SessionLayer};
 use chrono::{Datelike, Utc};
-use data_encoding::BASE64_NOPAD;
+use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
@@ -77,7 +77,7 @@ async fn index(
         (Some(access_token), Some(id_token)) => {
             let claims_part = id_token.split('.').collect::<Vec<_>>()[1];
             let claims_json =
-                std::str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
+                str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
             let claims: IdToken = serde_json::from_str(&claims_json)?;
             let pid = claims.pid;
 
@@ -95,22 +95,42 @@ async fn index(
 
             tracing::info!("Utkast: {utkast}");
 
-            let el = Element::parse(utkast.as_bytes())?;
-            let dok_ref = &el
+            let utkast_xml = Element::parse(utkast.as_bytes())?;
+            let skattemeldingdokument = utkast_xml
                 .get_child("dokumenter")
                 .ok_or_else(|| anyhow!("Did not find 'dokumenter' in XML structure"))?
                 .get_child("skattemeldingdokument")
-                .ok_or_else(|| anyhow!("Did not find 'skattemeldingdokument' in XML structure"))?
+                .ok_or_else(|| anyhow!("Did not find 'skattemeldingdokument' in XML structure"))?;
+
+            let dok_ref = skattemeldingdokument
                 .get_child("id")
                 .ok_or_else(|| anyhow!("Did not find 'id' in XML structure"))?
                 .get_text()
-                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?;
+                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?
+                .to_string();
+
+            let content_base64 = &skattemeldingdokument
+                .get_child("content")
+                .ok_or_else(|| anyhow!("Did not find 'content' in XML structure"))?
+                .get_text()
+                .ok_or_else(|| anyhow!("'content' did not contain text in XML structure"))?;
+
+            let content = str::from_utf8(&BASE64.decode(content_base64.as_bytes())?)?.to_string();
+
+            let content_xml = Element::parse(content.as_bytes())?;
+            let partsnummer = content_xml
+                .get_child("partsnummer")
+                .ok_or_else(|| anyhow!("Did not find 'partsnummer' in XML structure"))?
+                .get_text()
+                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?
+                .to_string();
 
             Ok(Html(config.tera.render(
                 "authenticated.html",
                 &Context::from_serialize(&Authenticated {
                     pid,
-                    dok_ref: dok_ref.to_string(),
+                    dok_ref,
+                    partsnummer,
                 })?,
             )?))
         }
@@ -203,6 +223,7 @@ struct IdToken {
 struct Authenticated {
     pid: String,
     dok_ref: String,
+    partsnummer: String,
 }
 
 #[derive(Deserialize)]
