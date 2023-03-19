@@ -1,5 +1,11 @@
 # Skattemelding
 
+## Lokal køyring
+
+```bash
+RUST_LOG=info cargo watch -x run
+```
+
 ## Spesifikasjon av prosess
 
 Finn endpoints her:

@@ -1,21 +1,41 @@
+use anyhow::anyhow;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
     response::{Html, IntoResponse, Redirect, Response},
     routing::get,
-    Json, Router,
+    Router,
 };
-use serde::Deserialize;
-use serde_json::json;
-use std::fs;
-use std::{error::Error, net::SocketAddr};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, error::Error, net::SocketAddr, sync::RwLock};
+use std::{fs, sync::Arc};
 use tera::{Context, Tera};
+
+const ACCESS_TOKEN: &str = "access_token";
+const ID_TOKEN: &str = "id_token";
 
 #[derive(Clone)]
 pub struct Config {
     pub tera: Tera,
     pub client_secret: String,
 }
+
+#[derive(Clone)]
+struct AppState {
+    config: Config,
+    db: HashMap<&'static str, String>,
+}
+
+impl AppState {
+    fn new(config: Config) -> Self {
+        AppState {
+            config,
+            db: HashMap::<&str, String>::default(),
+        }
+    }
+}
+
+type SharedState = Arc<RwLock<AppState>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -32,11 +52,13 @@ async fn main() -> Result<(), Box<dyn Error>> {
         client_secret,
     };
 
+    let shared_state = Arc::new(RwLock::new(AppState::new(config)));
+
     let app = Router::new()
         .route("/", get(index))
         .route("/logginn", get(logginn))
         .route("/token", get(token))
-        .with_state(config);
+        .with_state(shared_state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 12345));
     tracing::info!("listening on {}", addr);
@@ -47,8 +69,29 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn index(State(config): State<Config>) -> Result<Html<String>, AppError> {
-    Ok(Html(config.tera.render("index.html", &Context::new())?))
+async fn index(State(state): State<SharedState>) -> Result<Html<String>, AppError> {
+    match (
+        state.read().unwrap().db.get(ACCESS_TOKEN),
+        state.read().unwrap().db.get(ID_TOKEN),
+    ) {
+        (Some(access_token), Some(id_token)) => {
+            Ok(Html(state.read().unwrap().config.tera.render(
+                "authenticated.html",
+                &Context::from_serialize(&Authenticated {
+                    access_token: access_token.to_string(),
+                    id_token: id_token.to_string(),
+                })?,
+            )?))
+        }
+        _ => Ok(Html(
+            state
+                .read()
+                .unwrap()
+                .config
+                .tera
+                .render("guest.html", &Context::new())?,
+        )),
+    }
 }
 
 async fn logginn() -> Redirect {
@@ -56,17 +99,22 @@ async fn logginn() -> Redirect {
     Redirect::permanent("https://oidc.difi.no/idporten-oidc-provider/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&acr_values=Level3&client_id=4060f6d4-28ab-410d-bf14-edd62aa88dcf&redirect_uri=http%3A%2F%2Flocalhost%3A12345%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=v7PyFrwYJeGtsYYchHyjafe4Z_GxMtDUPDuWXX_BRMg=&code_challenge_method=S256&ui_locales=nb")
 }
 
-async fn token(
-    State(config): State<Config>,
+/// Using client defined at
+/// https://selvbetjening-samarbeid-prod.difi.no/integrations/4060f6d4-28ab-410d-bf14-edd62aa88dcf
+async fn token<'a>(
+    State(state): State<SharedState>,
     Query(query_params): Query<QueryParams>,
-) -> Result<String, AppError> {
+) -> Result<Redirect, AppError> {
     let form_params = [
         ("grant_type", "authorization_code".to_string()),
         (
             "client_id",
             "4060f6d4-28ab-410d-bf14-edd62aa88dcf".to_string(),
         ),
-        ("client_secret", config.client_secret),
+        (
+            "client_secret",
+            state.read().unwrap().config.client_secret.clone(),
+        ),
         (
             "code_verifier",
             "HalCZ880JLh4IiV0JOTEJc9E_7ghoc1qCQTK2kSSsaE".to_string(),
@@ -84,17 +132,38 @@ async fn token(
 
     tracing::info!("Token response: {}", response);
 
-    let token_response: TokenResponse = serde_json::from_str(&response)?;
+    let token_response: Result<TokenResponse, _> = serde_json::from_str(&response);
 
-    if let Some(e) = token_response.error {
-        return Err(AppError::Token(e, token_response.error_description));
-    }
+    match token_response {
+        Ok(token_response) => {
+            tracing::info!("Access token: {}", token_response.access_token);
+            tracing::info!("Id token: {}", token_response.id_token);
+            state
+                .write()
+                .unwrap()
+                .db
+                .insert(ACCESS_TOKEN, token_response.access_token);
+            state
+                .write()
+                .unwrap()
+                .db
+                .insert(ID_TOKEN, token_response.id_token);
 
-    if let Some(token) = token_response.access_token {
-        tracing::info!("Access token: {}", token);
-        Ok(response)
-    } else {
-        Err(AppError::Token("No token received".to_string(), None))
+            Ok(Redirect::permanent("/"))
+        }
+        Err(_) => {
+            let error_response: Result<ErrorResponse, _> = serde_json::from_str(&response);
+
+            match error_response {
+                Ok(error_response) => Err((anyhow!(
+                    "{}: {}",
+                    error_response.error,
+                    error_response.error_description
+                ))
+                .into()),
+                Err(_) => Err(anyhow!("Could not understand token response").into()),
+            }
+        }
     }
 }
 
@@ -105,54 +174,39 @@ struct QueryParams {
 
 #[derive(Deserialize)]
 struct TokenResponse {
-    access_token: Option<String>,
-    error: Option<String>,
-    error_description: Option<String>,
+    access_token: String,
+    id_token: String,
 }
 
-enum AppError {
-    Reqwest(reqwest::Error),
-    Serde(serde_json::Error),
-    Tera(tera::Error),
-    Token(String, Option<String>),
+#[derive(Serialize)]
+struct Authenticated {
+    access_token: String,
+    id_token: String,
 }
 
-impl From<reqwest::Error> for AppError {
-    fn from(inner: reqwest::Error) -> Self {
-        AppError::Reqwest(inner)
-    }
-}
-
-impl From<serde_json::Error> for AppError {
-    fn from(inner: serde_json::Error) -> Self {
-        AppError::Serde(inner)
-    }
-}
-
-impl From<tera::Error> for AppError {
-    fn from(inner: tera::Error) -> Self {
-        AppError::Tera(inner)
-    }
+#[derive(Deserialize)]
+struct ErrorResponse {
+    error: String,
+    error_description: String,
 }
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, error_message) = match self {
-            AppError::Reqwest(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            AppError::Serde(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            AppError::Tera(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-            AppError::Token(e, description) => (
-                StatusCode::UNAUTHORIZED,
-                e + &description
-                    .map(|s| format!(": {s}"))
-                    .unwrap_or("".to_string()),
-            ),
-        };
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Something went wrong: {}", self.0),
+        )
+            .into_response()
+    }
+}
 
-        let body = Json(json!({
-            "error": error_message,
-        }));
+struct AppError(anyhow::Error);
 
-        (status, body).into_response()
+impl<E> From<E> for AppError
+where
+    E: Into<anyhow::Error>,
+{
+    fn from(err: E) -> Self {
+        Self(err.into())
     }
 }
