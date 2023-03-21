@@ -18,10 +18,10 @@
         <formuesobjekt>
             <id>1</id>
             <formuesobjekttype>
-                <formuesobjekttype>formuesobjektOmfattetAvVerdsettingsrabattDriftsmidlerMv</formuesobjekttype>
+                <formuesobjekttype>formuesobjektIkkeOmfattetAvVerdsettingsrabatt</formuesobjekttype>
             </formuesobjekttype>
             <verdiFoerEventuellVerdsettingsrabatt>
-                <beloepSomHeltall>344940</beloepSomHeltall>
+                <beloepSomHeltall>645826</beloepSomHeltall>
             </verdiFoerEventuellVerdsettingsrabatt>
         </formuesobjekt>
         <gjeld>
@@ -31,7 +31,7 @@
         </gjeld>
         <samletVerdiFoerEventuellVerdsettingsrabatt>
             <beloep>
-                <beloepSomHeltall>344940</beloepSomHeltall>
+                <beloepSomHeltall>645826</beloepSomHeltall>
             </beloep>
         </samletVerdiFoerEventuellVerdsettingsrabatt>
         <samletGjeld>

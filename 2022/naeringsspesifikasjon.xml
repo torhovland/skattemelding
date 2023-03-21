@@ -84,9 +84,22 @@
                 </beloep>
             </kostnad>
         </finanskostnad>
+        <skattekostnad>
+            <kostnad>
+                <id>8300</id>
+                <type>
+                    <resultatOgBalanseregnskapstype>8300</resultatOgBalanseregnskapstype>
+                </type>
+                <beloep>
+                    <beloep>
+                        <beloep>12781</beloep>
+                    </beloep>
+                </beloep>
+            </kostnad>
+        </skattekostnad>
         <aarsresultat>
             <beloep>
-                <beloep>58096</beloep>
+                <beloep>45315</beloep>
             </beloep>
         </aarsresultat>
     </resultatregnskap>
@@ -179,18 +192,39 @@
                     <beloep>58096</beloep>
                 </beloep>
             </fordeltSkattemessigResultatEtterKorreksjon>
+            <andelAvFordeltSkattemessigResultatTilordnetInnehaver>
+                <prosent>100</prosent>
+            </andelAvFordeltSkattemessigResultatTilordnetInnehaver>
+            <fordeltSkattemessigResultatEtterKorreksjonTilordnetInnehaver>
+                <beloep>
+                    <beloep>58096</beloep>
+                </beloep>
+            </fordeltSkattemessigResultatEtterKorreksjonTilordnetInnehaver>
         </fordeltBeregnetNaeringsinntekt>
-        <sumEndringIMidlertidigForskjell>
+        <sumTilleggINaeringsinntekt>
             <beloep>
-                <beloep>0</beloep>
+                <beloep>12781</beloep>
             </beloep>
-        </sumEndringIMidlertidigForskjell>
+        </sumTilleggINaeringsinntekt>
         <skattemessigResultat>
             <beloep>
                 <beloep>58096</beloep>
             </beloep>
         </skattemessigResultat>
     </beregnetNaeringsinntekt>
+    <forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
+        <permanentForskjell>
+            <id>1</id>
+            <permanentForskjellstype>
+                <permanentForskjellstype>positivSkattekostnad</permanentForskjellstype>
+            </permanentForskjellstype>
+            <beloep>
+                <beloep>
+                    <beloep>12781</beloep>
+                </beloep>
+            </beloep>
+        </permanentForskjell>
+    </forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
     <virksomhet>
         <regnskapspliktstype>
             <regnskapspliktstype>fullRegnskapsplikt</regnskapspliktstype>
@@ -217,6 +251,17 @@
                 <beloep>45315</beloep>
             </beloep>
         </sumTilleggIEgenkapital>
+        <egenkapitalendring>
+            <id>EK1</id>
+            <egenkapitalendringstype>
+                <egenkapitalendringstype>aaretsOverskudd</egenkapitalendringstype>
+            </egenkapitalendringstype>
+            <beloep>
+                <beloep>
+                    <beloep>45315</beloep>
+                </beloep>
+            </beloep>
+        </egenkapitalendring>
         <utgaaendeEgenkapital>
             <beloep>
                 <beloep>314940</beloep>
