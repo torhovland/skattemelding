@@ -163,7 +163,7 @@ async fn index(
                 skattemelding_base64, naeringsspesifikasjon_base64, dok_ref, config.year
             );
 
-            tracing::info!("Konvolutt: {konvolutt}");
+            tracing::debug!("Konvolutt: {konvolutt}");
 
             let validation_response = reqwest::Client::new()
                 .post(format!(
@@ -179,7 +179,7 @@ async fn index(
                 .text()
                 .await?;
 
-            tracing::info!("Validation response: {}", validation_response);
+            tracing::debug!("Validation response: {}", validation_response);
 
             let validation_xml = Element::parse(validation_response.as_bytes())?;
 
@@ -295,7 +295,7 @@ async fn token(
                     error_response.error_description
                 ))
                 .into()),
-                Err(_) => Err(anyhow!("Could not understand token response").into()),
+                _ => Err(anyhow!("Could not understand token response").into()),
             }
         }
     }
@@ -307,6 +307,8 @@ async fn altinn(
     session: WritableSession,
 ) -> Result<Html<String>, AppError> {
     let access_token: Option<String> = session.get(ACCESS_TOKEN);
+
+    tracing::info!("Access token: {access_token:?}");
 
     match access_token {
         Some(access_token) => {
@@ -340,47 +342,87 @@ async fn altinn(
 
             let instances: Vec<AltinnInstance> = serde_json::from_str(&instances_response)?;
 
-            if instances.is_empty() {
-                // Lag skattemeldingsinstans med JSON som body:
-                // POST https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/
-                // altinn_header = {"Authorization": "Bearer " + r.text}
-                // {"instanceOwner": {"organisationNumber": '999579922'},
-                // "appOwner": {
-                // "labels": ["gr", "x2"]
-                // }, "appId": "skd/formueinntekt-skattemelding-v2", "dueBefore": "2023-04-16", "visibleAfter": "2023-03-16",
-                // "title": {"nb": "Skattemelding"}, "dataValues": {"inntektsaar": "2022"}}
-                unimplemented!("Lag skattemeldingsinstans");
+            for instance in instances {
+                reqwest::Client::new()
+                .delete(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{}", instance.id))
+                .header("Authorization", format!("Bearer {altinn_token}"))
+                .send()
+                .await?
+                .error_for_status()?;
             }
 
-            if instances.len() > 1 {
-                unimplemented!("Velg riktig instans.");
-            }
+            let body = format!("{{\"instanceOwner\": {{\"organisationNumber\": '{}'}},
+            \"appOwner\": {{
+                \"labels\": [\"gr\", \"x2\"]
+                }}, \"appId\": \"skd/formueinntekt-skattemelding-v2\", \"dueBefore\": \"{}-12-31\", \"visibleAfter\": \"{}-01-01\",
+                \"title\": {{\"nb\": \"Skattemelding\"}}, \"dataValues\": {{\"inntektsaar\": \"{}\"}}}}", config.org_number, config.year + 1, config.year + 1, config.year);
 
-            let instance_id = &instances[0].id;
+            tracing::info!("Posting new instance: {}", body);
+
+            let instance_response = reqwest::Client::new()
+                .post("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances")
+                .header("Authorization", format!("Bearer {altinn_token}"))
+                .header("Content-Type", "application/json")
+                .body(body)
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            tracing::info!("Instance response: {}", instance_response);
+
+            let instance: AltinnInstance = serde_json::from_str(&instance_response)?;
+            let instance_id = instance.id;
 
             let skattemelding =
                 tokio::fs::File::open(format!("{}/skattemelding.xml", config.year)).await?;
 
+            let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon");
             let upload_response = reqwest::Client::new()
-            .post(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon"))
-            .header("Authorization", format!("Bearer {altinn_token}"))
-            .header("Content-type", "text/xml")
-            .header("Content-Disposition", "attachment; filename=skattemelding.xml")
-            .body(file_to_body(skattemelding))
-            .send()
-            .await?
-            .error_for_status()?
-            .text()
-            .await?;
+                .post(url)
+                .header("Authorization", format!("Bearer {altinn_token}"))
+                .header("Content-Type", "text/xml")
+                .header(
+                    "Content-Disposition",
+                    "attachment; filename=skattemelding.xml",
+                )
+                .body(file_to_body(skattemelding))
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
 
             tracing::info!("Upload response: {}", upload_response);
+
+            // let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/process/next");
+            // let endre_prosess_response = reqwest::Client::new()
+            //     .put(url)
+            //     .header("Authorization", format!("Bearer {altinn_token}"))
+            //     .send()
+            //     .await?
+            //     .error_for_status()?
+            //     .text()
+            //     .await?;
+
+            // tracing::info!("Endre prosess response: {}", endre_prosess_response);
+
+            // let url = format!("https://skatt.sits.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={instance_id}");
+            // tracing::info!("Går til visning på {url}");
+
+            //     Ok(Redirect::permanent(&url))
+            // }
 
             Ok(Html(config.tera.render(
                 "altinn.html",
                 &Context::from_serialize(Altinn { pid })?,
             )?))
         }
-        _ => Ok(Html(config.tera.render("guest.html", &Context::new())?)),
+        _ => {
+            tracing::warn!("Fant ingen access token");
+            Ok(Html(config.tera.render("guest.html", &Context::default())?))
+        }
     }
 }
 
