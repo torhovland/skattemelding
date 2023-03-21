@@ -301,11 +301,10 @@ async fn token(
     }
 }
 
-#[debug_handler]
 async fn altinn(
     State(config): State<Config>,
     session: WritableSession,
-) -> Result<Html<String>, AppError> {
+) -> Result<Redirect, AppError> {
     let access_token: Option<String> = session.get(ACCESS_TOKEN);
 
     tracing::info!("Access token: {access_token:?}");
@@ -327,7 +326,7 @@ async fn altinn(
             let claims_json =
                 str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
             let claims: IdToken = serde_json::from_str(&claims_json)?;
-            let pid = claims.pid;
+            let _pid = claims.pid;
 
             let instances_response = reqwest::Client::new()
                 .get("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/60271338/active")
@@ -396,32 +395,26 @@ async fn altinn(
 
             tracing::info!("Upload response: {}", upload_response);
 
-            // let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/process/next");
-            // let endre_prosess_response = reqwest::Client::new()
-            //     .put(url)
-            //     .header("Authorization", format!("Bearer {altinn_token}"))
-            //     .send()
-            //     .await?
-            //     .error_for_status()?
-            //     .text()
-            //     .await?;
+            let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/process/next");
+            let endre_prosess_response = reqwest::Client::new()
+                .put(url)
+                .header("Authorization", format!("Bearer {altinn_token}"))
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
 
-            // tracing::info!("Endre prosess response: {}", endre_prosess_response);
+            tracing::info!("Endre prosess response: {}", endre_prosess_response);
 
-            // let url = format!("https://skatt.sits.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={instance_id}");
-            // tracing::info!("Går til visning på {url}");
+            let url = format!("https://skatt.skatteetaten.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={instance_id}");
+            tracing::info!("Går til visning på {url}");
 
-            //     Ok(Redirect::permanent(&url))
-            // }
-
-            Ok(Html(config.tera.render(
-                "altinn.html",
-                &Context::from_serialize(Altinn { pid })?,
-            )?))
+            Ok(Redirect::permanent(&url))
         }
         _ => {
             tracing::warn!("Fant ingen access token");
-            Ok(Html(config.tera.render("guest.html", &Context::default())?))
+            Ok(Redirect::permanent("/"))
         }
     }
 }
