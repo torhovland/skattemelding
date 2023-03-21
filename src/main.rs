@@ -13,6 +13,8 @@ use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
+use tokio::fs::File;
+use tokio_util::codec::{BytesCodec, FramedRead};
 use xmltree::{Element, EmitterConfig};
 
 const ACCESS_TOKEN: &str = "access_token";
@@ -53,6 +55,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/", get(index))
         .route("/logginn", get(logginn))
         .route("/token", get(token))
+        .route("/altinn", get(altinn))
         .layer(session_layer)
         .with_state(config);
 
@@ -219,8 +222,8 @@ async fn index(
                 .collect();
 
             Ok(Html(config.tera.render(
-                "authenticated.html",
-                &Context::from_serialize(&Authenticated {
+                "validation.html",
+                &Context::from_serialize(Validation {
                     pid,
                     dok_ref,
                     partsnummer,
@@ -298,6 +301,94 @@ async fn token(
     }
 }
 
+#[debug_handler]
+async fn altinn(
+    State(config): State<Config>,
+    session: WritableSession,
+) -> Result<Html<String>, AppError> {
+    let access_token: Option<String> = session.get(ACCESS_TOKEN);
+
+    match access_token {
+        Some(access_token) => {
+            let altinn_token = reqwest::Client::new()
+                .get("https://platform.altinn.no/authentication/api/v1/exchange/id-porten")
+                .header("Authorization", format!("Bearer {access_token}"))
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            tracing::info!("Altinn token: {altinn_token}");
+
+            let claims_part = altinn_token.split('.').collect::<Vec<_>>()[1];
+            let claims_json =
+                str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
+            let claims: IdToken = serde_json::from_str(&claims_json)?;
+            let pid = claims.pid;
+
+            let instances_response = reqwest::Client::new()
+                .get("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/60271338/active")
+                .header("Authorization", format!("Bearer {altinn_token}"))
+                .send()
+                .await?
+                .error_for_status()?
+                .text()
+                .await?;
+
+            tracing::info!("Altinn instances: {instances_response}");
+
+            let instances: Vec<AltinnInstance> = serde_json::from_str(&instances_response)?;
+
+            if instances.is_empty() {
+                // Lag skattemeldingsinstans med JSON som body:
+                // POST https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/
+                // altinn_header = {"Authorization": "Bearer " + r.text}
+                // {"instanceOwner": {"organisationNumber": '999579922'},
+                // "appOwner": {
+                // "labels": ["gr", "x2"]
+                // }, "appId": "skd/formueinntekt-skattemelding-v2", "dueBefore": "2023-04-16", "visibleAfter": "2023-03-16",
+                // "title": {"nb": "Skattemelding"}, "dataValues": {"inntektsaar": "2022"}}
+                unimplemented!("Lag skattemeldingsinstans");
+            }
+
+            if instances.len() > 1 {
+                unimplemented!("Velg riktig instans.");
+            }
+
+            let instance_id = &instances[0].id;
+
+            let skattemelding =
+                tokio::fs::File::open(format!("{}/skattemelding.xml", config.year)).await?;
+
+            let upload_response = reqwest::Client::new()
+            .post(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon"))
+            .header("Authorization", format!("Bearer {altinn_token}"))
+            .header("Content-type", "text/xml")
+            .header("Content-Disposition", "attachment; filename=skattemelding.xml")
+            .body(file_to_body(skattemelding))
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
+
+            tracing::info!("Upload response: {}", upload_response);
+
+            Ok(Html(config.tera.render(
+                "altinn.html",
+                &Context::from_serialize(Altinn { pid })?,
+            )?))
+        }
+        _ => Ok(Html(config.tera.render("guest.html", &Context::new())?)),
+    }
+}
+
+fn file_to_body(file: File) -> reqwest::Body {
+    let stream = FramedRead::new(file, BytesCodec::new());
+    reqwest::Body::wrap_stream(stream)
+}
+
 #[derive(Debug, Deserialize)]
 struct QueryParams {
     code: String,
@@ -315,12 +406,22 @@ struct IdToken {
 }
 
 #[derive(Serialize)]
-struct Authenticated {
+struct Validation {
     pid: String,
     dok_ref: String,
     partsnummer: String,
     validation: String,
     dokumenter: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct Altinn {
+    pid: String,
+}
+
+#[derive(Deserialize)]
+struct AltinnInstance {
+    id: String,
 }
 
 #[derive(Deserialize)]
