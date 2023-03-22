@@ -2,8 +2,7 @@ use anyhow::{anyhow, Result};
 use axum::{
     debug_handler,
     extract::{Query, State},
-    http::StatusCode,
-    response::{Html, IntoResponse, Redirect, Response},
+    response::{Html, Redirect},
     routing::get,
     Router,
 };
@@ -15,13 +14,15 @@ use tera::{Context, Tera};
 
 use crate::{
     base64::{decode, encode},
+    error::{AppError, ErrorResponse},
     file::{read_naeringsspesifikasjon, read_skattemelding},
     http::post,
-    xml::{XmlElement, XmlNode},
+    jwt::{IdToken, TokenResponse},
+    xml::{to_xml, XmlElement, XmlNode},
 };
-use crate::{jwt::IdToken, xml::to_xml};
 
 mod base64;
+mod error;
 mod file;
 mod http;
 mod jwt;
@@ -368,12 +369,6 @@ struct QueryParams {
     code: String,
 }
 
-#[derive(Deserialize)]
-struct TokenResponse {
-    access_token: String,
-    id_token: String,
-}
-
 #[derive(Serialize)]
 struct Validation<'a> {
     pid: String,
@@ -383,39 +378,7 @@ struct Validation<'a> {
     dokumenter: Vec<String>,
 }
 
-#[derive(Serialize)]
-struct Altinn {
-    pid: String,
-}
-
 #[derive(Deserialize)]
 struct AltinnInstance {
     id: String,
-}
-
-#[derive(Deserialize)]
-struct ErrorResponse {
-    error: String,
-    error_description: String,
-}
-
-impl IntoResponse for AppError {
-    fn into_response(self) -> Response {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            format!("Something went wrong: {}", self.0),
-        )
-            .into_response()
-    }
-}
-
-struct AppError(anyhow::Error);
-
-impl<E> From<E> for AppError
-where
-    E: Into<anyhow::Error>,
-{
-    fn from(err: E) -> Self {
-        Self(err.into())
-    }
 }

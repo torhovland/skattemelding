@@ -6,6 +6,12 @@ use std::str;
 use crate::base64::decode_nopad;
 
 #[derive(Deserialize)]
+pub struct TokenResponse {
+    pub access_token: String,
+    pub id_token: String,
+}
+
+#[derive(Deserialize)]
 pub struct IdToken {
     pub pid: String,
 }
