@@ -11,6 +11,7 @@ use axum_sessions::{async_session, extractors::WritableSession, SameSite, Sessio
 use chrono::{Datelike, Utc};
 use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
 use tokio::fs::File;
@@ -19,6 +20,7 @@ use xmltree::{Element, EmitterConfig};
 
 const ACCESS_TOKEN: &str = "access_token";
 const ID_TOKEN: &str = "id_token";
+const KONVOLUTT: &str = "konvolutt";
 
 #[derive(Clone)]
 pub struct Config {
@@ -71,7 +73,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 #[debug_handler]
 async fn index(
     State(config): State<Config>,
-    session: WritableSession,
+    mut session: WritableSession,
 ) -> Result<Html<String>, AppError> {
     let access_token: Option<String> = session.get(ACCESS_TOKEN);
     let id_token: Option<String> = session.get(ID_TOKEN);
@@ -164,6 +166,7 @@ async fn index(
             );
 
             tracing::debug!("Konvolutt: {konvolutt}");
+            session.insert(KONVOLUTT, konvolutt.clone())?;
 
             let validation_response = reqwest::Client::new()
                 .post(format!(
@@ -306,11 +309,12 @@ async fn altinn(
     session: WritableSession,
 ) -> Result<Redirect, AppError> {
     let access_token: Option<String> = session.get(ACCESS_TOKEN);
+    let konvolutt: Option<String> = session.get(KONVOLUTT);
 
     tracing::info!("Access token: {access_token:?}");
 
-    match access_token {
-        Some(access_token) => {
+    match (access_token, konvolutt) {
+        (Some(access_token), Some(konvolutt)) => {
             let altinn_token = reqwest::Client::new()
                 .get("https://platform.altinn.no/authentication/api/v1/exchange/id-porten")
                 .header("Authorization", format!("Bearer {access_token}"))
@@ -374,19 +378,41 @@ async fn altinn(
             let instance: AltinnInstance = serde_json::from_str(&instance_response)?;
             let instance_id = instance.id;
 
-            let skattemelding =
-                tokio::fs::File::open(format!("{}/skattemelding.xml", config.year)).await?;
+            // let mut file = fs::File::create(format!("{}/validert.xml", config.year))?;
+            // file.write_all(validation_response.as_bytes())?;
+
+            // let validert = tokio::fs::File::open(format!("{}/validert.xml", config.year)).await?;
 
             let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon");
+            // let form = reqwest::blocking::multipart::Form::new().file(
+            //     "skattemeldingOgNaeringsspesifikasjon.xml",
+            //     format!("{}/validert.xml", config.year),
+            // )?;
+
+            // req_send_inn = last_opp_skattedata(instans_data, altinn_header,
+            //     xml=naering_as,
+            //     data_type="skattemeldingOgNaeringsspesifikasjon",
+            //     appnavn=altinn3_applikasjon)
+
+            // def last_opp_skattedata(instans_data: dict, token: dict, xml: str,
+            //     data_type: str = "skattemelding",
+            //     appnavn: str = "skd/formueinntekt-skattemelding-v2") -> requests:
+            //     url = f"{ALTINN_URL}/{appnavn}/instances/{instans_data['id']}/data?dataType={data_type}"
+            //     token["content-type"] = "text/xml"
+            //     token["Content-Disposition"] = "attachment; filename=skattemelding.xml"
+
+            //     r = requests.post(url, data=xml, headers=token, verify=False)
+
             let upload_response = reqwest::Client::new()
                 .post(url)
+                // .form(&form)
                 .header("Authorization", format!("Bearer {altinn_token}"))
                 .header("Content-Type", "text/xml")
                 .header(
                     "Content-Disposition",
                     "attachment; filename=skattemelding.xml",
                 )
-                .body(file_to_body(skattemelding))
+                .body(konvolutt)
                 .send()
                 .await?
                 .error_for_status()?
