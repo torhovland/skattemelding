@@ -13,8 +13,6 @@ use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
-use tokio::fs::File;
-use tokio_util::codec::{BytesCodec, FramedRead};
 use xmltree::{Element, EmitterConfig};
 
 const ACCESS_TOKEN: &str = "access_token";
@@ -418,11 +416,6 @@ async fn altinn(
             Ok(Redirect::permanent("/"))
         }
     }
-}
-
-fn file_to_body(file: File) -> reqwest::Body {
-    let stream = FramedRead::new(file, BytesCodec::new());
-    reqwest::Body::wrap_stream(stream)
 }
 
 #[derive(Debug, Deserialize)]
