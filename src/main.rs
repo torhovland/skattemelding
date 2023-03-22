@@ -9,15 +9,21 @@ use axum::{
 };
 use axum_sessions::{async_session, extractors::WritableSession, SameSite, SessionLayer};
 use chrono::{Datelike, Utc};
-use data_encoding::{BASE64, BASE64_NOPAD};
+use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
+use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
-use xmltree::{Element, EmitterConfig};
 
-use crate::jwt::IdToken;
-use crate::xml::{XmlElement, XmlNode};
+use crate::{
+    base64::{decode, encode},
+    file::{read_naeringsspesifikasjon, read_skattemelding},
+    http::post,
+    xml::{XmlElement, XmlNode},
+};
+use crate::{jwt::IdToken, xml::to_xml};
 
+mod base64;
+mod file;
 mod http;
 mod jwt;
 mod xml;
@@ -97,25 +103,23 @@ async fn index(
 
             tracing::info!("Utkast: {utkast}");
 
-            let utkast_xml = Element::parse(utkast.as_bytes())?;
+            let utkast_xml = to_xml(&utkast)?;
             let skattemeldingdokument = utkast_xml
                 .child("dokumenter")?
                 .child("skattemeldingdokument")?;
 
             let dok_ref = skattemeldingdokument.child("id")?.text()?;
             let content_base64 = &skattemeldingdokument.child("content")?.text()?;
+            let content = decode(content_base64)?;
 
-            let content = str::from_utf8(&BASE64.decode(content_base64.as_bytes())?)?.to_string();
-
-            let content_xml = Element::parse(content.as_bytes())?;
+            let content_xml = to_xml(&content)?;
             let partsnummer = content_xml.child("partsnummer")?.text()?;
 
-            let skattemelding = fs::read_to_string(format!("{}/skattemelding.xml", config.year))?;
-            let skattemelding_base64 = BASE64.encode(skattemelding.as_bytes());
+            let skattemelding = read_skattemelding(config.year)?;
+            let skattemelding_base64 = encode(&skattemelding);
 
-            let naeringsspesifikasjon =
-                fs::read_to_string(format!("{}/naeringsspesifikasjon.xml", config.year))?;
-            let naeringsspesifikasjon_base64 = BASE64.encode(naeringsspesifikasjon.as_bytes());
+            let naeringsspesifikasjon = read_naeringsspesifikasjon(config.year)?;
+            let naeringsspesifikasjon_base64 = encode(&naeringsspesifikasjon);
 
             let konvolutt = format!(
                 r#"<?xml version="1.0" encoding="utf-8" ?>
@@ -148,31 +152,25 @@ async fn index(
             tracing::debug!("Konvolutt: {konvolutt}");
             session.insert(KONVOLUTT, konvolutt.clone())?;
 
-            let validation_response = reqwest::Client::new()
-                .post(format!(
+            let validation_response = post(
+                &format!(
                     "https://idporten.api.skatteetaten.no/api/skattemelding/v2/valider/{}/{}",
                     config.year, config.org_number
-                ))
-                .header("Authorization", format!("Bearer {access_token}"))
-                .header("Content-Type", "application/xml")
-                .body(konvolutt)
-                .send()
-                .await?
-                .error_for_status()?
-                .text()
-                .await?;
+                ),
+                &access_token,
+            )
+            .header("Content-Type", "application/xml")
+            .body(konvolutt)
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
 
             tracing::debug!("Validation response: {}", validation_response);
 
-            let validation_xml = Element::parse(validation_response.as_bytes())?;
-
-            let mut cfg = EmitterConfig::new();
-            cfg.perform_indent = true;
-
-            let mut buf = BufWriter::new(Vec::new());
-            validation_xml.write_with_config(&mut buf, cfg)?;
-            let bytes = buf.into_inner()?;
-            let validation = String::from_utf8(bytes)?;
+            let validation_xml = to_xml(&validation_response)?;
+            let validation = validation_xml.format()?;
 
             let dokumenter: Vec<_> = validation_xml
                 .child("dokumenter")?
@@ -180,18 +178,9 @@ async fn index(
                 .iter()
                 .map(|d| {
                     let encoded = d.element()?.child("content")?.text()?;
-
-                    let decoded = str::from_utf8(&BASE64.decode(encoded.as_bytes())?)?.to_string();
-
-                    let xml = Element::parse(decoded.as_bytes())?;
-
-                    let mut cfg = EmitterConfig::new();
-                    cfg.perform_indent = true;
-
-                    let mut buf = BufWriter::new(Vec::new());
-                    xml.write_with_config(&mut buf, cfg)?;
-                    let bytes = buf.into_inner()?;
-                    Ok(String::from_utf8(bytes)?)
+                    let decoded = decode(&encoded)?;
+                    let xml = to_xml(&decoded)?;
+                    xml.format()
                 })
                 .collect::<Result<Vec<_>>>()?;
 
