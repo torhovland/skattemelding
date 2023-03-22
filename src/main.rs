@@ -18,6 +18,7 @@ use xmltree::{Element, EmitterConfig};
 use crate::jwt::IdToken;
 use crate::xml::{XmlElement, XmlNode};
 
+mod http;
 mod jwt;
 mod xml;
 
@@ -85,17 +86,14 @@ async fn index(
         (Some(access_token), Some(id_token)) => {
             let pid = IdToken::from_str(&id_token)?.pid;
 
-            let utkast = reqwest::Client::new()
-                .get(format!(
+            let utkast = http::get(
+                &format!(
                     "https://idporten.api.skatteetaten.no/api/skattemelding/v2/utkast/{}/{}",
                     config.year, config.org_number
-                ))
-                .header("Authorization", format!("Bearer {access_token}"))
-                .send()
-                .await?
-                .error_for_status()?
-                .text()
-                .await?;
+                ),
+                &access_token,
+            )
+            .await?;
 
             tracing::info!("Utkast: {utkast}");
 
