@@ -15,8 +15,10 @@ use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
 use xmltree::{Element, EmitterConfig};
 
+use crate::jwt::IdToken;
 use crate::xml::{XmlElement, XmlNode};
 
+mod jwt;
 mod xml;
 
 const ACCESS_TOKEN: &str = "access_token";
@@ -81,11 +83,7 @@ async fn index(
 
     match (access_token, id_token) {
         (Some(access_token), Some(id_token)) => {
-            let claims_part = id_token.split('.').collect::<Vec<_>>()[1];
-            let claims_json =
-                str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
-            let claims: IdToken = serde_json::from_str(&claims_json)?;
-            let pid = claims.pid;
+            let pid = IdToken::from_str(&id_token)?.pid;
 
             let utkast = reqwest::Client::new()
                 .get(format!(
@@ -405,11 +403,6 @@ struct QueryParams {
 struct TokenResponse {
     access_token: String,
     id_token: String,
-}
-
-#[derive(Deserialize)]
-struct IdToken {
-    pid: String,
 }
 
 #[derive(Serialize)]
