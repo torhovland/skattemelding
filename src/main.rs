@@ -1,4 +1,4 @@
-use anyhow::anyhow;
+use anyhow::{anyhow, Result};
 use axum::{
     debug_handler,
     extract::{Query, State},
@@ -15,7 +15,7 @@ use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
 use xmltree::{Element, EmitterConfig};
 
-use crate::xml::Xml;
+use crate::xml::{XmlElement, XmlNode};
 
 mod xml;
 
@@ -183,29 +183,21 @@ async fn index(
                 .children
                 .iter()
                 .map(|d| {
-                    let encoded = d
-                        .as_element()
-                        .unwrap()
-                        .get_child("content")
-                        .unwrap()
-                        .get_text()
-                        .unwrap();
+                    let encoded = d.element()?.child("content")?.text()?;
 
-                    let decoded = str::from_utf8(&BASE64.decode(encoded.as_bytes()).unwrap())
-                        .unwrap()
-                        .to_string();
+                    let decoded = str::from_utf8(&BASE64.decode(encoded.as_bytes())?)?.to_string();
 
-                    let xml = Element::parse(decoded.as_bytes()).unwrap();
+                    let xml = Element::parse(decoded.as_bytes())?;
 
                     let mut cfg = EmitterConfig::new();
                     cfg.perform_indent = true;
 
                     let mut buf = BufWriter::new(Vec::new());
-                    xml.write_with_config(&mut buf, cfg).unwrap();
-                    let bytes = buf.into_inner().unwrap();
-                    String::from_utf8(bytes).unwrap()
+                    xml.write_with_config(&mut buf, cfg)?;
+                    let bytes = buf.into_inner()?;
+                    Ok(String::from_utf8(bytes)?)
                 })
-                .collect();
+                .collect::<Result<Vec<_>>>()?;
 
             Ok(Html(config.tera.render(
                 "validation.html",
