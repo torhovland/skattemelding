@@ -9,7 +9,6 @@ use axum::{
 };
 use axum_sessions::{async_session, extractors::WritableSession, SameSite, SessionLayer};
 use chrono::{Datelike, Utc};
-use data_encoding::BASE64_NOPAD;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
@@ -92,7 +91,7 @@ async fn index(
         (Some(access_token), Some(id_token)) => {
             let pid = IdToken::from_str(&id_token)?.pid;
 
-            let utkast = http::get(
+            let utkast = http::get_text(
                 &format!(
                     "https://idporten.api.skatteetaten.no/api/skattemelding/v2/utkast/{}/{}",
                     config.year, config.org_number
@@ -157,7 +156,7 @@ async fn index(
                     "https://idporten.api.skatteetaten.no/api/skattemelding/v2/valider/{}/{}",
                     config.year, config.org_number
                 ),
-                &access_token,
+                Some(&access_token),
             )
             .header("Content-Type", "application/xml")
             .body(konvolutt)
@@ -225,8 +224,7 @@ async fn token(
         ("code", query_params.code),
     ];
 
-    let response = reqwest::Client::new()
-        .post("https://oidc.difi.no/idporten-oidc-provider/token")
+    let response = post("https://oidc.difi.no/idporten-oidc-provider/token", None)
         .form(&form_params)
         .send()
         .await?
@@ -275,26 +273,19 @@ async fn altinn(
 
     match (access_token, konvolutt) {
         (Some(access_token), Some(konvolutt)) => {
-            let altinn_token = reqwest::Client::new()
-                .get("https://platform.altinn.no/authentication/api/v1/exchange/id-porten")
-                .header("Authorization", format!("Bearer {access_token}"))
-                .send()
-                .await?
-                .error_for_status()?
-                .text()
-                .await?;
+            let altinn_token = http::get(
+                "https://platform.altinn.no/authentication/api/v1/exchange/id-porten",
+                Some(&access_token),
+            )
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
 
             tracing::info!("Altinn token: {altinn_token}");
 
-            let claims_part = altinn_token.split('.').collect::<Vec<_>>()[1];
-            let claims_json =
-                str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
-            let claims: IdToken = serde_json::from_str(&claims_json)?;
-            let _pid = claims.pid;
-
-            let instances_response = reqwest::Client::new()
-                .get("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/60271338/active")
-                .header("Authorization", format!("Bearer {altinn_token}"))
+            let instances_response = http::get("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/60271338/active", Some(&altinn_token))
                 .send()
                 .await?
                 .error_for_status()?
@@ -306,9 +297,7 @@ async fn altinn(
             let instances: Vec<AltinnInstance> = serde_json::from_str(&instances_response)?;
 
             for instance in instances {
-                reqwest::Client::new()
-                .delete(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{}", instance.id))
-                .header("Authorization", format!("Bearer {altinn_token}"))
+                http::delete(&format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{}", instance.id), Some(&altinn_token))
                 .send()
                 .await?
                 .error_for_status()?;
@@ -322,27 +311,23 @@ async fn altinn(
 
             tracing::info!("Posting new instance: {}", body);
 
-            let instance_response = reqwest::Client::new()
-                .post("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances")
-                .header("Authorization", format!("Bearer {altinn_token}"))
-                .header("Content-Type", "application/json")
-                .body(body)
-                .send()
-                .await?
-                .error_for_status()?
-                .text()
-                .await?;
+            let instance_response = http::post(
+                "https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances",
+                Some(&altinn_token),
+            )
+            .header("Content-Type", "application/json")
+            .body(body)
+            .send()
+            .await?
+            .error_for_status()?
+            .text()
+            .await?;
 
             tracing::info!("Instance response: {}", instance_response);
 
             let instance: AltinnInstance = serde_json::from_str(&instance_response)?;
-            let instance_id = instance.id;
 
-            let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon");
-            let upload_response = reqwest::Client::new()
-                .post(url)
-                // .form(&form)
-                .header("Authorization", format!("Bearer {altinn_token}"))
+            let upload_response = http::post(&(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{}/data?dataType=skattemeldingOgNaeringsspesifikasjon", instance.id)), Some(&altinn_token))
                 .header("Content-Type", "text/xml")
                 .header(
                     "Content-Disposition",
@@ -357,10 +342,7 @@ async fn altinn(
 
             tracing::info!("Upload response: {}", upload_response);
 
-            let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/process/next");
-            let endre_prosess_response = reqwest::Client::new()
-                .put(url)
-                .header("Authorization", format!("Bearer {altinn_token}"))
+            let endre_prosess_response = http::put(&(format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{}/process/next", instance.id)), Some(&altinn_token))
                 .send()
                 .await?
                 .error_for_status()?
@@ -369,7 +351,7 @@ async fn altinn(
 
             tracing::info!("Endre prosess response: {}", endre_prosess_response);
 
-            let url = format!("https://skatt.skatteetaten.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={instance_id}");
+            let url = format!("https://skatt.skatteetaten.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={}", instance.id);
             tracing::info!("Går til visning på {url}");
 
             Ok(Redirect::permanent(&url))

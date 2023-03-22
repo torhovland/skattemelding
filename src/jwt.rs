@@ -1,8 +1,9 @@
 use anyhow::Result;
-use data_encoding::BASE64_NOPAD;
 use serde::Deserialize;
 
 use std::str;
+
+use crate::base64::decode_nopad;
 
 #[derive(Deserialize)]
 pub struct IdToken {
@@ -11,10 +12,8 @@ pub struct IdToken {
 
 impl IdToken {
     pub fn from_str(value: &str) -> Result<Self> {
-        let claims_part = value.split('.').collect::<Vec<_>>()[1];
-        let claims_json =
-            str::from_utf8(&BASE64_NOPAD.decode(claims_part.as_bytes())?)?.to_string();
-        let claims: IdToken = serde_json::from_str(&claims_json)?;
+        let claims: IdToken =
+            serde_json::from_str(&decode_nopad(value.split('.').collect::<Vec<_>>()[1])?)?;
 
         Ok(Self { pid: claims.pid })
     }
