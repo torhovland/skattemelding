@@ -11,7 +11,6 @@ use axum_sessions::{async_session, extractors::WritableSession, SameSite, Sessio
 use chrono::{Datelike, Utc};
 use data_encoding::{BASE64, BASE64_NOPAD};
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
 use tokio::fs::File;
@@ -378,31 +377,7 @@ async fn altinn(
             let instance: AltinnInstance = serde_json::from_str(&instance_response)?;
             let instance_id = instance.id;
 
-            // let mut file = fs::File::create(format!("{}/validert.xml", config.year))?;
-            // file.write_all(validation_response.as_bytes())?;
-
-            // let validert = tokio::fs::File::open(format!("{}/validert.xml", config.year)).await?;
-
             let url = format!("https://skd.apps.altinn.no/skd/formueinntekt-skattemelding-v2/instances/{instance_id}/data?dataType=skattemeldingOgNaeringsspesifikasjon");
-            // let form = reqwest::blocking::multipart::Form::new().file(
-            //     "skattemeldingOgNaeringsspesifikasjon.xml",
-            //     format!("{}/validert.xml", config.year),
-            // )?;
-
-            // req_send_inn = last_opp_skattedata(instans_data, altinn_header,
-            //     xml=naering_as,
-            //     data_type="skattemeldingOgNaeringsspesifikasjon",
-            //     appnavn=altinn3_applikasjon)
-
-            // def last_opp_skattedata(instans_data: dict, token: dict, xml: str,
-            //     data_type: str = "skattemelding",
-            //     appnavn: str = "skd/formueinntekt-skattemelding-v2") -> requests:
-            //     url = f"{ALTINN_URL}/{appnavn}/instances/{instans_data['id']}/data?dataType={data_type}"
-            //     token["content-type"] = "text/xml"
-            //     token["Content-Disposition"] = "attachment; filename=skattemelding.xml"
-
-            //     r = requests.post(url, data=xml, headers=token, verify=False)
-
             let upload_response = reqwest::Client::new()
                 .post(url)
                 // .form(&form)
