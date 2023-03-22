@@ -15,6 +15,10 @@ use std::{error::Error, fs, io::BufWriter, net::SocketAddr, str};
 use tera::{Context, Tera};
 use xmltree::{Element, EmitterConfig};
 
+use crate::xml::Xml;
+
+mod xml;
+
 const ACCESS_TOKEN: &str = "access_token";
 const ID_TOKEN: &str = "id_token";
 const KONVOLUTT: &str = "konvolutt";
@@ -99,33 +103,16 @@ async fn index(
 
             let utkast_xml = Element::parse(utkast.as_bytes())?;
             let skattemeldingdokument = utkast_xml
-                .get_child("dokumenter")
-                .ok_or_else(|| anyhow!("Did not find 'dokumenter' in XML structure"))?
-                .get_child("skattemeldingdokument")
-                .ok_or_else(|| anyhow!("Did not find 'skattemeldingdokument' in XML structure"))?;
+                .child("dokumenter")?
+                .child("skattemeldingdokument")?;
 
-            let dok_ref = skattemeldingdokument
-                .get_child("id")
-                .ok_or_else(|| anyhow!("Did not find 'id' in XML structure"))?
-                .get_text()
-                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?
-                .to_string();
-
-            let content_base64 = &skattemeldingdokument
-                .get_child("content")
-                .ok_or_else(|| anyhow!("Did not find 'content' in XML structure"))?
-                .get_text()
-                .ok_or_else(|| anyhow!("'content' did not contain text in XML structure"))?;
+            let dok_ref = skattemeldingdokument.child("id")?.text()?;
+            let content_base64 = &skattemeldingdokument.child("content")?.text()?;
 
             let content = str::from_utf8(&BASE64.decode(content_base64.as_bytes())?)?.to_string();
 
             let content_xml = Element::parse(content.as_bytes())?;
-            let partsnummer = content_xml
-                .get_child("partsnummer")
-                .ok_or_else(|| anyhow!("Did not find 'partsnummer' in XML structure"))?
-                .get_text()
-                .ok_or_else(|| anyhow!("'id' did not contain text in XML structure"))?
-                .to_string();
+            let partsnummer = content_xml.child("partsnummer")?.text()?;
 
             let skattemelding = fs::read_to_string(format!("{}/skattemelding.xml", config.year))?;
             let skattemelding_base64 = BASE64.encode(skattemelding.as_bytes());
@@ -192,8 +179,7 @@ async fn index(
             let validation = String::from_utf8(bytes)?;
 
             let dokumenter: Vec<_> = validation_xml
-                .get_child("dokumenter")
-                .ok_or_else(|| anyhow!("Did not find 'dokumenter' in XML structure"))?
+                .child("dokumenter")?
                 .children
                 .iter()
                 .map(|d| {
@@ -225,9 +211,9 @@ async fn index(
                 "validation.html",
                 &Context::from_serialize(Validation {
                     pid,
-                    dok_ref,
-                    partsnummer,
-                    validation,
+                    dok_ref: &dok_ref,
+                    partsnummer: &partsnummer,
+                    validation: &validation,
                     dokumenter,
                 })?,
             )?))
@@ -435,11 +421,11 @@ struct IdToken {
 }
 
 #[derive(Serialize)]
-struct Validation {
+struct Validation<'a> {
     pid: String,
-    dok_ref: String,
-    partsnummer: String,
-    validation: String,
+    dok_ref: &'a str,
+    partsnummer: &'a str,
+    validation: &'a str,
     dokumenter: Vec<String>,
 }
 
