@@ -123,11 +123,13 @@ async fn index(
             )
             .await;
 
-            if let Ok(fastsatt) = fastsatt {
+            let er_fastsatt = if let Ok(fastsatt) = fastsatt {
                 tracing::info!("Fastsatt: {fastsatt}");
+                true
             } else {
                 tracing::info!("Ingen fastsetting per no.");
-            }
+                false
+            };
 
             let gjeldende_xml = to_xml(&gjeldende)?;
             let skattemeldingdokument = gjeldende_xml
@@ -223,6 +225,7 @@ async fn index(
                     partsnummer: &partsnummer,
                     validation: &validation,
                     dokumenter,
+                    er_fastsatt,
                 })?,
             )?))
         }
@@ -407,6 +410,7 @@ struct Validation<'a> {
     partsnummer: &'a str,
     validation: &'a str,
     dokumenter: Vec<String>,
+    er_fastsatt: bool,
 }
 
 #[derive(Deserialize)]
