@@ -167,22 +167,27 @@ async fn index(
             .text()
             .await?;
 
-            tracing::debug!("Validation response: {}", validation_response);
+            tracing::info!("Validation response: {}", validation_response);
 
             let validation_xml = to_xml(&validation_response)?;
             let validation = validation_xml.format()?;
 
-            let dokumenter: Vec<_> = validation_xml
-                .child("dokumenter")?
-                .children
-                .iter()
-                .map(|d| {
-                    let encoded = d.element()?.child("content")?.text()?;
-                    let decoded = decode(&encoded)?;
-                    let xml = to_xml(&decoded)?;
-                    xml.format()
-                })
-                .collect::<Result<Vec<_>>>()?;
+            let dokumenter = validation_xml.child("dokumenter");
+
+            let dokumenter = if let Ok(dokumenter) = dokumenter {
+                dokumenter
+                    .children
+                    .iter()
+                    .map(|d| {
+                        let encoded = d.element()?.child("content")?.text()?;
+                        let decoded = decode(&encoded)?;
+                        let xml = to_xml(&decoded)?;
+                        xml.format()
+                    })
+                    .collect::<Result<Vec<_>>>()?
+            } else {
+                vec![]
+            };
 
             Ok(Html(config.tera.render(
                 "validation.html",

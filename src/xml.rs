@@ -11,7 +11,9 @@ pub trait XmlElement {
 
 impl XmlElement for Element {
     fn child(&self, name: &str) -> Result<&Element> {
-        self.get_child("name")
+        tracing::debug!("Looking for {name} in: {self:?}");
+
+        self.get_child(name)
             .ok_or_else(|| anyhow!(format!("Did not find {name} in XML element")))
     }
 
