@@ -103,8 +103,34 @@ async fn index(
 
             tracing::info!("Utkast: {utkast}");
 
-            let utkast_xml = to_xml(&utkast)?;
-            let skattemeldingdokument = utkast_xml
+            let gjeldende = http::get_text(
+                &format!(
+                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/{}/{}",
+                    config.year, config.org_number
+                ),
+                &access_token,
+            )
+            .await?;
+
+            tracing::info!("Gjeldende: {gjeldende}");
+
+            let fastsatt = http::get_text(
+                &format!(
+                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/fastsatt/{}/{}",
+                    config.year, config.org_number
+                ),
+                &access_token,
+            )
+            .await;
+
+            if let Ok(fastsatt) = fastsatt {
+                tracing::info!("Fastsatt: {fastsatt}");
+            } else {
+                tracing::info!("Ingen fastsetting per no.");
+            }
+
+            let gjeldende_xml = to_xml(&gjeldende)?;
+            let skattemeldingdokument = gjeldende_xml
                 .child("dokumenter")?
                 .child("skattemeldingdokument")?;
 
