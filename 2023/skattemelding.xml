@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <skattemelding
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v2">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v3">
     <partsnummer>1442927932</partsnummer>
     <inntektsaar>2023</inntektsaar>
     <inntektOgUnderskudd>
@@ -14,6 +14,14 @@
                 <beloepSomHeltall>383932</beloepSomHeltall>
             </beloep>
         </samletInntekt>
+        <samletUnderskudd>
+            <beloep>
+                <beloepSomHeltall>0</beloepSomHeltall>
+            </beloep>
+        </samletUnderskudd>
+        <konsernbidragSkalBekreftesAvRevisor>
+            false
+        </konsernbidragSkalBekreftesAvRevisor>
     </inntektOgUnderskudd>
     <formueOgGjeld>
         <formuesobjekt>
@@ -41,9 +49,9 @@
             </beloep>
         </samletGjeld>
     </formueOgGjeld>
-    <opplysningerOmSkattesubjekt>
+    <opplysningOmSkattesubjekt>
         <erBoersnotert>false</erBoersnotert>
-    </opplysningerOmSkattesubjekt>
+    </opplysningOmSkattesubjekt>
     <verdsettingAvAksje>
         <samletVerdiBakAksjeneISelskapet>
             <beloep>

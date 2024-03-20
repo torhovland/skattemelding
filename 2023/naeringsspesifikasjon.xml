@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <naeringsspesifikasjon
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v3">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v4">
     <partsreferanse>1442927932</partsreferanse>
     <inntektsaar>2023</inntektsaar>
     <resultatregnskap>
@@ -12,15 +12,15 @@
             </sumDriftsinntekt>
             <salgsinntekt>
                 <inntekt>
-                    <id>3000</id>
-                    <type>
-                        <resultatOgBalanseregnskapstype>3000</resultatOgBalanseregnskapstype>
-                    </type>
                     <beloep>
                         <beloep>
                             <beloep>1476230</beloep>
                         </beloep>
                     </beloep>
+                    <id>3000</id>
+                    <type>
+                        <resultatOgBalanseregnskapstype>3000</resultatOgBalanseregnskapstype>
+                    </type>
                 </inntekt>
             </salgsinntekt>
         </driftsinntekt>
@@ -32,15 +32,15 @@
             </sumDriftskostnad>
             <annenDriftskostnad>
                 <kostnad>
-                    <id>6000</id>
-                    <type>
-                        <resultatOgBalanseregnskapstype>6000</resultatOgBalanseregnskapstype>
-                    </type>
                     <beloep>
                         <beloep>
                             <beloep>1104263</beloep>
                         </beloep>
                     </beloep>
+                    <id>6000</id>
+                    <type>
+                        <resultatOgBalanseregnskapstype>6000</resultatOgBalanseregnskapstype>
+                    </type>
                 </kostnad>
             </annenDriftskostnad>
         </driftskostnad>
@@ -61,41 +61,41 @@
         </sumSkattekostnad>
         <finansinntekt>
             <inntekt>
-                <id>8050</id>
-                <type>
-                    <resultatOgBalanseregnskapstype>8050</resultatOgBalanseregnskapstype>
-                </type>
                 <beloep>
                     <beloep>
                         <beloep>12123</beloep>
                     </beloep>
                 </beloep>
+                <id>8050</id>
+                <type>
+                    <resultatOgBalanseregnskapstype>8050</resultatOgBalanseregnskapstype>
+                </type>
             </inntekt>
         </finansinntekt>
         <finanskostnad>
             <kostnad>
-                <id>8115</id>
-                <type>
-                    <resultatOgBalanseregnskapstype>8115</resultatOgBalanseregnskapstype>
-                </type>
                 <beloep>
                     <beloep>
                         <beloep>158</beloep>
                     </beloep>
                 </beloep>
+                <id>8115</id>
+                <type>
+                    <resultatOgBalanseregnskapstype>8115</resultatOgBalanseregnskapstype>
+                </type>
             </kostnad>
         </finanskostnad>
         <skattekostnad>
             <kostnad>
-                <id>8300</id>
-                <type>
-                    <resultatOgBalanseregnskapstype>8300</resultatOgBalanseregnskapstype>
-                </type>
                 <beloep>
                     <beloep>
                         <beloep>84465</beloep>
                     </beloep>
                 </beloep>
+                <id>8300</id>
+                <type>
+                    <resultatOgBalanseregnskapstype>8300</resultatOgBalanseregnskapstype>
+                </type>
             </kostnad>
         </skattekostnad>
         <aarsresultat>
@@ -122,6 +122,9 @@
                     <type>
                         <resultatOgBalanseregnskapstype>1900</resultatOgBalanseregnskapstype>
                     </type>
+                    <ekskluderesFraSkattemeldingen>
+                        <boolsk>true</boolsk>
+                    </ekskluderesFraSkattemeldingen>
                 </balanseverdi>
             </balanseverdiForOmloepsmiddel>
         </omloepsmiddel>
@@ -147,6 +150,9 @@
                     <type>
                         <resultatOgBalanseregnskapstype>2400</resultatOgBalanseregnskapstype>
                     </type>
+                    <ekskluderesFraSkattemeldingen>
+                        <boolsk>true</boolsk>
+                    </ekskluderesFraSkattemeldingen>
                 </gjeld>
             </kortsiktigGjeld>
             <egenkapital>
@@ -175,14 +181,11 @@
         </sumGjeldOgEgenkapital>
     </balanseregnskap>
     <beregnetNaeringsinntekt>
-        <fordeltBeregnetNaeringsinntekt>
+        <fordeltBeregnetNaeringsinntektForUpersonligSkattepliktig>
             <id>h1</id>
-            <naeringstype>
-                <naeringstype>annenNaering</naeringstype>
-            </naeringstype>
-            <naeringsbeskrivelse>
-                <tekst>IT-konsultasjon</tekst>
-            </naeringsbeskrivelse>
+            <kommunenummer>
+                <kommunenummer>5001</kommunenummer>
+            </kommunenummer>
             <fordeltSkattemessigResultat>
                 <beloep>
                     <beloep>383932</beloep>
@@ -193,20 +196,7 @@
                     <beloep>383932</beloep>
                 </beloep>
             </fordeltSkattemessigResultatEtterKorreksjon>
-            <andelAvFordeltSkattemessigResultatTilordnetInnehaver>
-                <prosent>100</prosent>
-            </andelAvFordeltSkattemessigResultatTilordnetInnehaver>
-            <fordeltSkattemessigResultatEtterKorreksjonTilordnetInnehaver>
-                <beloep>
-                    <beloep>383932</beloep>
-                </beloep>
-            </fordeltSkattemessigResultatEtterKorreksjonTilordnetInnehaver>
-        </fordeltBeregnetNaeringsinntekt>
-        <sumTilleggINaeringsinntekt>
-            <beloep>
-                <beloep>84465</beloep>
-            </beloep>
-        </sumTilleggINaeringsinntekt>
+        </fordeltBeregnetNaeringsinntektForUpersonligSkattepliktig>
         <skattemessigResultat>
             <beloep>
                 <beloep>383932</beloep>
