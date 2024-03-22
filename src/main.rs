@@ -6,11 +6,11 @@ use axum::{
     routing::get,
     Router,
 };
-use axum_sessions::{async_session, extractors::WritableSession, SameSite, SessionLayer};
 use chrono::{Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fs, net::SocketAddr, str};
 use tera::{Context, Tera};
+use tower_sessions::{cookie::time::Duration, Expiry, MemoryStore, Session, SessionManagerLayer};
 
 use crate::{
     base64::{decode, encode},
@@ -35,7 +35,11 @@ const KONVOLUTT: &str = "konvolutt";
 #[derive(Clone)]
 pub struct Config {
     pub tera: Tera,
+    pub client_id: String,
     pub client_secret: String,
+    pub redirect_uri: String,
+    pub pkce_code_challenge: String,
+    pub pkce_verifier_secret: String,
     pub org_number: String,
     pub year: i32,
 }
@@ -46,19 +50,31 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let tera = Tera::new("templates/**/*.html")?;
 
-    const SECRET_FILE_NAME: &str = "client_secret.txt";
-    tracing::info!("Reading {SECRET_FILE_NAME}");
-    let client_secret = fs::read_to_string(SECRET_FILE_NAME)?;
+    const CLIENT_SECRET_FILE_NAME: &str = "client_secret.txt";
+    const PKCE_VERIFIER_SECRET_FILE_NAME: &str = "pkce_verifier_secret.txt";
 
-    let store = async_session::MemoryStore::new();
-    let secret = b"aAog7DZJZnY6C4J8v0W81NizvjPv3UHHXP9pAJLxV4srnjsTONy5zOXgqPCuaihG";
+    tracing::info!("Reading secrets");
+    // TODO: Deduplicate reading of secrets
+    let client_secret = fs::read_to_string(CLIENT_SECRET_FILE_NAME)?
+        .trim()
+        .to_string();
+    let pkce_verifier_secret = fs::read_to_string(PKCE_VERIFIER_SECRET_FILE_NAME)?
+        .trim()
+        .to_string();
 
-    // Lax policy, otherwise redirecting to root after auth doesn't work.
-    let session_layer = SessionLayer::new(store, secret).with_same_site_policy(SameSite::Lax);
+    let session_store = MemoryStore::default();
+
+    let session_layer = SessionManagerLayer::new(session_store)
+        .with_secure(false)
+        .with_expiry(Expiry::OnInactivity(Duration::seconds(600)));
 
     let config = Config {
         tera,
+        client_id: "4060f6d4-28ab-410d-bf14-edd62aa88dcf".to_string(),
         client_secret,
+        redirect_uri: "https://mac.tail31c54.ts.net:443/token".to_string(),
+        pkce_code_challenge: "aFA1OAxhLtolRAYbYn0xqFUXvGncijKuXYOSQnltsaY".to_string(),
+        pkce_verifier_secret,
         org_number: "999579922".to_string(),
         year: Utc::now().date_naive().year() - 1,
     };
@@ -73,7 +89,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 12345));
     tracing::info!("listening on {}", addr);
-    axum::Server::bind(&addr)
+    axum_server::Server::bind(addr)
         .serve(app.into_make_service())
         .await?;
 
@@ -81,12 +97,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[debug_handler]
-async fn index(
-    State(config): State<Config>,
-    mut session: WritableSession,
-) -> Result<Html<String>, AppError> {
-    let access_token: Option<String> = session.get(ACCESS_TOKEN);
-    let id_token: Option<String> = session.get(ID_TOKEN);
+async fn index(State(config): State<Config>, session: Session) -> Result<Html<String>, AppError> {
+    let access_token: Option<String> = session.get(ACCESS_TOKEN).await?;
+    let id_token: Option<String> = session.get(ID_TOKEN).await?;
 
     match (access_token, id_token) {
         (Some(access_token), Some(id_token)) => {
@@ -178,7 +191,7 @@ async fn index(
             );
 
             tracing::debug!("Konvolutt: {konvolutt}");
-            session.insert(KONVOLUTT, konvolutt.clone())?;
+            session.insert(KONVOLUTT, konvolutt.clone()).await?;
 
             let validation_response = post(
                 &format!(
@@ -233,76 +246,94 @@ async fn index(
     }
 }
 
-async fn logginn() -> Redirect {
-    // https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
-    Redirect::permanent("https://oidc.difi.no/idporten-oidc-provider/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&acr_values=Level3&client_id=4060f6d4-28ab-410d-bf14-edd62aa88dcf&redirect_uri=http%3A%2F%2Flocalhost%3A12345%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=v7PyFrwYJeGtsYYchHyjafe4Z_GxMtDUPDuWXX_BRMg=&code_challenge_method=S256&ui_locales=nb")
+async fn logginn(State(config): State<Config>) -> Redirect {
+    // TODO: Look authorize URL up in https://idporten.no/.well-known/openid-configuration
+    let uri = format!("https://login.idporten.no/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&client_id={}&redirect_uri=https%3A%2F%2Fmac.tail31c54.ts.net%3A443%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=aFA1OAxhLtolRAYbYn0xqFUXvGncijKuXYOSQnltsaY&code_challenge_method=S256&ui_locales=nb", config.client_id);
+    Redirect::permanent(&uri)
 }
 
 /// Using client defined at
-/// https://selvbetjening-samarbeid-prod.difi.no/integrations/4060f6d4-28ab-410d-bf14-edd62aa88dcf
+/// https://selvbetjening-samarbeid-prod.difi.no/integrations
 async fn token(
     State(config): State<Config>,
-    mut session: WritableSession,
+    session: Session,
     Query(query_params): Query<QueryParams>,
 ) -> Result<Redirect, AppError> {
     let form_params = [
         ("grant_type", "authorization_code".to_string()),
-        (
-            "client_id",
-            "4060f6d4-28ab-410d-bf14-edd62aa88dcf".to_string(),
-        ),
+        ("client_id", config.client_id.clone()),
         ("client_secret", config.client_secret.clone()),
-        (
-            "code_verifier",
-            "HalCZ880JLh4IiV0JOTEJc9E_7ghoc1qCQTK2kSSsaE".to_string(),
-        ),
+        ("code_verifier", config.pkce_verifier_secret.clone()),
         ("code", query_params.code),
+        ("redirect_uri", config.redirect_uri.clone()),
     ];
 
-    let response = post("https://oidc.difi.no/idporten-oidc-provider/token", None)
+    tracing::info!("Token request params: {:#?}", form_params);
+    tracing::info!(
+        "Basic auth: {}:{}",
+        config.client_id.clone(),
+        config.client_secret.clone()
+    );
+
+    let response = post("https://idporten.no/token", None)
+        .basic_auth(config.client_id.clone(), Some(config.client_secret.clone()))
         .form(&form_params)
         .send()
-        .await?
-        .error_for_status()?
-        .text()
         .await?;
 
-    tracing::info!("Token response: {}", response);
+    let response_status = response.status();
+    let response_body = response.text().await?.clone();
 
-    let token_response: Result<TokenResponse, _> = serde_json::from_str(&response);
+    match response_status {
+        reqwest::StatusCode::OK => {
+            tracing::info!("Token response: {}", &response_body);
 
-    match token_response {
-        Ok(token_response) => {
-            tracing::info!("Access token: {}", token_response.access_token);
-            tracing::info!("Id token: {}", token_response.id_token);
+            let token_response: Result<TokenResponse, _> = serde_json::from_str(&response_body);
 
-            session.insert(ACCESS_TOKEN, token_response.access_token)?;
-            session.insert(ID_TOKEN, token_response.id_token)?;
+            match token_response {
+                Ok(token_response) => {
+                    tracing::info!("Access token: {}", token_response.access_token);
+                    tracing::info!("Id token: {}", token_response.id_token);
 
-            Ok(Redirect::permanent("/"))
-        }
-        Err(_) => {
-            let error_response: Result<ErrorResponse, _> = serde_json::from_str(&response);
+                    session
+                        .insert(ACCESS_TOKEN, token_response.access_token)
+                        .await?;
+                    session.insert(ID_TOKEN, token_response.id_token).await?;
 
-            match error_response {
-                Ok(error_response) => Err((anyhow!(
-                    "{}: {}",
-                    error_response.error,
-                    error_response.error_description
-                ))
-                .into()),
-                _ => Err(anyhow!("Could not understand token response").into()),
+                    Ok(Redirect::permanent("/"))
+                }
+                Err(_) => {
+                    let error_response: Result<ErrorResponse, _> =
+                        serde_json::from_str(&response_body);
+
+                    match error_response {
+                        Ok(error_response) => Err((anyhow!(
+                            "{}: {}",
+                            error_response.error,
+                            error_response.error_description
+                        ))
+                        .into()),
+                        _ => Err(anyhow!("Could not understand token response").into()),
+                    }
+                }
             }
+        }
+        _ => {
+            tracing::error!("Token error response: {}", &response_body);
+
+            Err((anyhow!(
+                "HTTP {} from token endpoint:\n{}",
+                &response_status,
+                &response_body,
+            ))
+            .into())
         }
     }
 }
 
-async fn altinn(
-    State(config): State<Config>,
-    session: WritableSession,
-) -> Result<Redirect, AppError> {
-    let access_token: Option<String> = session.get(ACCESS_TOKEN);
-    let konvolutt: Option<String> = session.get(KONVOLUTT);
+async fn altinn(State(config): State<Config>, session: Session) -> Result<Redirect, AppError> {
+    let access_token: Option<String> = session.get(ACCESS_TOKEN).await?;
+    let konvolutt: Option<String> = session.get(KONVOLUTT).await?;
 
     tracing::info!("Access token: {access_token:?}");
 
