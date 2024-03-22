@@ -1,5 +1,5 @@
+use axum::http::StatusCode;
 use axum::response::{Html, IntoResponse, Response};
-use reqwest::StatusCode;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
