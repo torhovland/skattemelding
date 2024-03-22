@@ -10,29 +10,39 @@ RUST_LOG=info cargo watch -x run
 
 Finn endpoints her:
 
-https://oidc.difi.no/idporten-oidc-provider/.well-known/openid-configuration
+https://idporten.no/.well-known/openid-configuration
 
-OAuth2 klient er her:
-https://selvbetjening-samarbeid-prod.difi.no/integrations/4060f6d4-28ab-410d-bf14-edd62aa88dcf
+Dokumentasjon her:
 
-client_name: Skattemelding
-client_id: 4060f6d4-28ab-410d-bf14-edd62aa88dcf
-client_secret: \*\*\*
+https://skatteetaten.github.io/mva-meldingen/english/idportenauthentication/#example-of-integration
+
+OAuth2 klient må inn her:
+https://sjolvbetjening.samarbeid.digdir.no/integrations
+
+Det fungerer ikkje med redirect URL som inneheld "local" eller "127.0.0.1". Så applikasjonen må enten køyre på ein server eller få eit dynamisk DNS-navn. Sistnemnte kan ordnast med Tailscale slik:
+
+```bash
+tailscale funnel 12345
+```
+
+Redirect URL må dessutan innehalde portnummeret, så det blir til dømes https://mac.tailnnn.ts.net:443/token.
+
+Klientkonfigurasjonen må også ha følgande:
+
+- Difi-tjeneste: API-klient
+- Scopes: openid og skatteetaten:formueinntekt/skattemelding
+- Klientautentiseringsmetode: client_secret_basic
+- Applikasjonstype: web
+- PKCE: S256
 
 OAuth2 authorize:
-https://oidc.difi.no/idporten-oidc-provider/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&acr_values=Level3&client_id=4060f6d4-28ab-410d-bf14-edd62aa88dcf&redirect_uri=http%3A%2F%2Flocalhost%3A12345%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=v7PyFrwYJeGtsYYchHyjafe4Z_GxMtDUPDuWXX_BRMg=&code_challenge_method=S256&ui_locales=nb
+
+https://login.idporten.no/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&client_id=4060f6d4-28ab-410d-bf14-edd62aa88dcf&redirect_uri=https%3A%2F%2Fmac.tail31c54.ts.net%3A443%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=aFA1OAxhLtolRAYbYn0xqFUXvGncijKuXYOSQnltsaY&code_challenge_method=S256&ui_locales=nb
 
 Retur:
-http://localhost:12345/token?code=5GyjYSmPkZAINh81\_\_DSVwHBMTNTM8U8UeVkbCv-2j0&state=SgNdr4kEG_EJOptKwlwg5Q
+https://mac.tail31c54.ts.net:443/token?code=5GyjYSmPkZAINh81\_\_DSVwHBMTNTM8U8UeVkbCv-2j0&state=SgNdr4kEG_EJOptKwlwg5Q
 
-POST https://oidc.difi.no/idporten-oidc-provider/token
-headers={'Accept': 'application/json'}
-data= {'grant_type': 'authorization_code',
-'code_verifier': 'HalCZ880JLh4IiV0JOTEJc9E_7ghoc1qCQTK2kSSsaE',
-'code': 'KV5SYyTe5Vdu78MtHBaHOBfqDkxgpsc5L6oWglSrz78',
-'redirect_uri': 'http://localhost:12345/token',
-'client_id': '4060f6d4-28ab-410d-bf14-edd62aa88dcf',
-'client_secret': '\*\*\*'}
+POST https://idporten.no/token
 
 Retur:
 {
