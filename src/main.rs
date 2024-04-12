@@ -248,7 +248,12 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
 
 async fn logginn(State(config): State<Config>) -> Redirect {
     // TODO: Look authorize URL up in https://idporten.no/.well-known/openid-configuration
-    let uri = format!("https://login.idporten.no/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&client_id={}&redirect_uri=https%3A%2F%2Fmac.tail31c54.ts.net%3A443%2Ftoken&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge=aFA1OAxhLtolRAYbYn0xqFUXvGncijKuXYOSQnltsaY&code_challenge_method=S256&ui_locales=nb", config.client_id);
+    let uri = format!("https://login.idporten.no/authorize?scope=skatteetaten%3Aformueinntekt%2Fskattemelding%20openid&client_id={}&redirect_uri={}&response_type=code&state=SgNdr4kEG_EJOptKwlwg5Q&nonce=1678988024798240&code_challenge={}&code_challenge_method=S256&ui_locales=nb", 
+        config.client_id, 
+        // TODO: Use config.redirect_uri, and URL encode it
+        "https%3A%2F%2Fmac.tail31c54.ts.net%3A443%2Ftoken",
+        config.pkce_code_challenge);
+    
     Redirect::permanent(&uri)
 }
 
