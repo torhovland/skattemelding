@@ -9,16 +9,14 @@
                 <beloepSomHeltall>383932</beloepSomHeltall>
             </naeringsinntekt>
         </inntekt>
+        <inntektFoerFradragForEventueltAvgittKonsernbidrag>
+            <beloepSomHeltall>383932</beloepSomHeltall>
+        </inntektFoerFradragForEventueltAvgittKonsernbidrag>
         <samletInntekt>
             <beloep>
                 <beloepSomHeltall>383932</beloepSomHeltall>
             </beloep>
         </samletInntekt>
-        <samletUnderskudd>
-            <beloep>
-                <beloepSomHeltall>0</beloepSomHeltall>
-            </beloep>
-        </samletUnderskudd>
         <konsernbidragSkalBekreftesAvRevisor>
             false
         </konsernbidragSkalBekreftesAvRevisor>
@@ -35,7 +33,7 @@
         </formuesobjekt>
         <gjeld>
             <annenGjeld>
-                <beloepSomHeltall>742090</beloepSomHeltall>
+                <beloepSomHeltall>742091</beloepSomHeltall>
             </annenGjeld>
         </gjeld>
         <samletVerdiFoerEventuellVerdsettingsrabatt>
@@ -45,7 +43,7 @@
         </samletVerdiFoerEventuellVerdsettingsrabatt>
         <samletGjeld>
             <beloep>
-                <beloepSomHeltall>742090</beloepSomHeltall>
+                <beloepSomHeltall>742091</beloepSomHeltall>
             </beloep>
         </samletGjeld>
     </formueOgGjeld>

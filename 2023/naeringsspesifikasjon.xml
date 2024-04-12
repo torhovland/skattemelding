@@ -100,7 +100,7 @@
         </skattekostnad>
         <aarsresultat>
             <beloep>
-                <beloep>383932</beloep>
+                <beloep>299467</beloep>
             </beloep>
         </aarsresultat>
     </resultatregnskap>
@@ -108,7 +108,7 @@
         <omloepsmiddel>
             <sumBalanseverdiForOmloepsmiddel>
                 <beloep>
-                    <beloep>645826</beloep>
+                    <beloep>1086498</beloep>
                 </beloep>
             </sumBalanseverdiForOmloepsmiddel>
             <balanseverdiForOmloepsmiddel>
@@ -131,7 +131,7 @@
         <gjeldOgEgenkapital>
             <sumKortsiktigGjeld>
                 <beloep>
-                    <beloep>742090</beloep>
+                    <beloep>742091</beloep>
                 </beloep>
             </sumKortsiktigGjeld>
             <sumEgenkapital>
@@ -144,7 +144,7 @@
                     <id>2400</id>
                     <beloep>
                         <beloep>
-                            <beloep>742090</beloep>
+                            <beloep>742091</beloep>
                         </beloep>
                     </beloep>
                     <type>
@@ -215,6 +215,11 @@
                 </beloep>
             </beloep>
         </permanentForskjell>
+        <sumTilleggINaeringsinntekt>
+            <beloep>
+                <beloep>84465</beloep>
+            </beloep>
+        </sumTilleggINaeringsinntekt>
     </forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
     <virksomhet>
         <regnskapspliktstype>
@@ -239,9 +244,14 @@
         </inngaaendeEgenkapital>
         <sumTilleggIEgenkapital>
             <beloep>
-                <beloep>-533</beloep>
+                <beloep>299467</beloep>
             </beloep>
         </sumTilleggIEgenkapital>
+        <sumFradragIEgenkapital>
+            <beloep>
+                <beloep>300000</beloep>
+            </beloep>
+        </sumFradragIEgenkapital>
         <egenkapitalendring>
             <id>EK1</id>
             <egenkapitalendringstype>
@@ -249,7 +259,18 @@
             </egenkapitalendringstype>
             <beloep>
                 <beloep>
-                    <beloep>-533</beloep>
+                    <beloep>299467</beloep>
+                </beloep>
+            </beloep>
+        </egenkapitalendring>
+        <egenkapitalendring>
+            <id>EK2</id>
+            <egenkapitalendringstype>
+                <egenkapitalendringstype>avsattEllerForventetUtbytte</egenkapitalendringstype>
+            </egenkapitalendringstype>
+            <beloep>
+                <beloep>
+                    <beloep>300000</beloep>
                 </beloep>
             </beloep>
         </egenkapitalendring>
