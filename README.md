@@ -1,5 +1,9 @@
 # Skattemelding
 
+## Nødvendige tilgangar
+
+For å få tilgang til å kunne levere skattemelding må du sende epost til servicedesk@digdir.no og be om at ditt organisasjonsnummer blir registrert i Samarbeidsportalen. Når det er på plass må du sende epost til skattemelding-sbs-brukerstotte@skatteetaten.no og be om tilgang til scope for levering av skattemelding for det gitte organisasjonsnummeret.
+
 ## Lokal køyring
 
 ```bash
