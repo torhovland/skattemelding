@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <skattemelding
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v3">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v4">
     <partsnummer>1442927932</partsnummer>
     <inntektsaar>2024</inntektsaar>
     <inntektOgUnderskudd>
@@ -9,19 +9,19 @@
                 <beloepSomHeltall>493407</beloepSomHeltall>
             </naeringsinntekt>
         </inntekt>
+        <inntektFoerFradragForEventueltAvgittKonsernbidrag>
+                <beloepSomHeltall>493407</beloepSomHeltall>
+        </inntektFoerFradragForEventueltAvgittKonsernbidrag>
         <samletInntekt>
             <beloep>
                 <beloepSomHeltall>493407</beloepSomHeltall>
             </beloep>
         </samletInntekt>
-        <samletUnderskudd>
-            <beloep>
+        <tilbakefoertUnderskuddFraForhaandsfastsetting>
+            <tilbakefoertUnderskudd>
                 <beloepSomHeltall>0</beloepSomHeltall>
-            </beloep>
-        </samletUnderskudd>
-        <konsernbidragSkalBekreftesAvRevisor>
-            false
-        </konsernbidragSkalBekreftesAvRevisor>
+            </tilbakefoertUnderskudd>
+        </tilbakefoertUnderskuddFraForhaandsfastsetting>
     </inntektOgUnderskudd>
     <formueOgGjeld>
         <formuesobjekt>
@@ -35,7 +35,7 @@
         </formuesobjekt>
         <gjeld>
             <annenGjeld>
-                <beloepSomHeltall>983292</beloepSomHeltall>
+                <beloepSomHeltall>983291</beloepSomHeltall>
             </annenGjeld>
         </gjeld>
         <samletVerdiFoerEventuellVerdsettingsrabatt>
@@ -45,7 +45,7 @@
         </samletVerdiFoerEventuellVerdsettingsrabatt>
         <samletGjeld>
             <beloep>
-                <beloepSomHeltall>983292</beloepSomHeltall>
+                <beloepSomHeltall>983291</beloepSomHeltall>
             </beloep>
         </samletGjeld>
     </formueOgGjeld>

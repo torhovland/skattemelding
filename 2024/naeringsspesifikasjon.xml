@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <naeringsspesifikasjon
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v4">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v5">
     <partsreferanse>1442927932</partsreferanse>
     <inntektsaar>2024</inntektsaar>
     <resultatregnskap>
         <driftsinntekt>
             <sumDriftsinntekt>
                 <beloep>
-                    <beloep>1587536</beloep>
+                    <beloep>1587535</beloep>
                 </beloep>
             </sumDriftsinntekt>
             <salgsinntekt>
                 <inntekt>
                     <beloep>
                         <beloep>
-                            <beloep>1587536</beloep>
+                            <beloep>1587535</beloep>
                         </beloep>
                     </beloep>
                     <id>3000</id>
@@ -56,7 +56,7 @@
         </sumFinanskostnad>
         <sumSkattekostnad>
             <beloep>
-                <beloep>108550</beloep>
+                <beloep>108549</beloep>
             </beloep>
         </sumSkattekostnad>
         <finansinntekt>
@@ -89,7 +89,7 @@
             <kostnad>
                 <beloep>
                     <beloep>
-                        <beloep>108550</beloep>
+                        <beloep>108549</beloep>
                     </beloep>
                 </beloep>
                 <id>8300</id>
@@ -100,7 +100,7 @@
         </skattekostnad>
         <aarsresultat>
             <beloep>
-                <beloep>493407</beloep>
+                <beloep>384858</beloep>
             </beloep>
         </aarsresultat>
     </resultatregnskap>
@@ -131,7 +131,7 @@
         <gjeldOgEgenkapital>
             <sumKortsiktigGjeld>
                 <beloep>
-                    <beloep>983292</beloep>
+                    <beloep>983291</beloep>
                 </beloep>
             </sumKortsiktigGjeld>
             <sumEgenkapital>
@@ -144,7 +144,7 @@
                     <id>2400</id>
                     <beloep>
                         <beloep>
-                            <beloep>983292</beloep>
+                            <beloep>983291</beloep>
                         </beloep>
                     </beloep>
                     <type>
@@ -211,18 +211,23 @@
             </permanentForskjellstype>
             <beloep>
                 <beloep>
-                    <beloep>108550</beloep>
+                    <beloep>108549</beloep>
                 </beloep>
             </beloep>
         </permanentForskjell>
+        <sumTilleggINaeringsinntekt>
+            <beloep>
+                <beloep>108549</beloep>
+            </beloep>
+        </sumTilleggINaeringsinntekt>
     </forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
     <virksomhet>
         <regnskapspliktstype>
             <regnskapspliktstype>fullRegnskapsplikt</regnskapspliktstype>
         </regnskapspliktstype>
         <regnskapsperiode>
-            <start>2024-01-01T00:00:00.000Z</start>
-            <slutt>2024-12-31T23:59:59.000Z</slutt>
+            <start><dato>2024-01-01</dato></start>
+            <slutt><dato>2024-12-31</dato></slutt>
         </regnskapsperiode>
         <virksomhetstype>
             <virksomhetstype>oevrigSelskap</virksomhetstype>
@@ -239,9 +244,14 @@
         </inngaaendeEgenkapital>
         <sumTilleggIEgenkapital>
             <beloep>
-                <beloep>-15142</beloep>
+                <beloep>384858</beloep>
             </beloep>
         </sumTilleggIEgenkapital>
+        <sumFradragIEgenkapital>
+            <beloep>
+                <beloep>400000</beloep>
+            </beloep>
+        </sumFradragIEgenkapital>
         <egenkapitalendring>
             <id>EK1</id>
             <egenkapitalendringstype>
@@ -249,7 +259,18 @@
             </egenkapitalendringstype>
             <beloep>
                 <beloep>
-                    <beloep>-15142</beloep>
+                    <beloep>384858</beloep>
+                </beloep>
+            </beloep>
+        </egenkapitalendring>
+        <egenkapitalendring>
+            <id>EK2</id>
+            <egenkapitalendringstype>
+                <egenkapitalendringstype>avsattEllerForventetUtbytte</egenkapitalendringstype>
+            </egenkapitalendringstype>
+            <beloep>
+                <beloep>
+                    <beloep>400000</beloep>
                 </beloep>
             </beloep>
         </egenkapitalendring>
