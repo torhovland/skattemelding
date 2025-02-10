@@ -6,6 +6,12 @@ For å få tilgang til å kunne levere skattemelding må du sende epost til serv
 
 ## Lokal køyring
 
+Sett opp ein tunnel frå https://mac.tail31c54.ts.net til http://localhost:12345 slik: 
+
+```bash
+tailscale funnel 12345
+```
+
 ```bash
 RUST_LOG=info cargo watch -x run
 ```
@@ -207,6 +213,12 @@ Retur:
 <harLeveringsfritak>false</harLeveringsfritak>
 </informasjonOmUpersonligSkattesubjekt>
 </skattemeldingOgNaeringsspesifikasjonResponse>
+
+I tilfelle valideringsfeil, sjekk om det er kome nye XSD-filer her:
+https://github.com/Skatteetaten/skattemeldingen/tree/master/src/resources/xsd
+
+Sjekk validering for eksempel her:
+https://www.freeformatter.com/xml-validator-xsd.html
 
 Hent Altinn-token
 GET https://platform.altinn.no/authentication/api/v1/exchange/id-porten
