@@ -185,6 +185,7 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
                 <innsendingsinformasjon>
                     <innsendingstype>komplett</innsendingstype>
                     <opprettetAv>Tor Hovland</opprettetAv>
+                    <innsendingsformaal>egenfastsetting</innsendingsformaal>
                 </innsendingsinformasjon>
             </skattemeldingOgNaeringsspesifikasjonRequest>"#,
                 skattemelding_base64, naeringsspesifikasjon_base64, dok_ref, config.year
@@ -204,7 +205,7 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
             .body(konvolutt)
             .send()
             .await?
-            .error_for_status()?
+            // .error_for_status()?
             .text()
             .await?;
 

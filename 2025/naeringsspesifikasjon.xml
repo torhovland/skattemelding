@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <naeringsspesifikasjon
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v4">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v6">
     <partsreferanse>1442927932</partsreferanse>
     <inntektsaar>2025</inntektsaar>
     <resultatregnskap>
@@ -46,17 +46,17 @@
         </driftskostnad>
         <sumFinansinntekt>
             <beloep>
-                <beloep>25586</beloep>
+                <beloep>24015</beloep>
             </beloep>
         </sumFinansinntekt>
         <sumFinanskostnad>
             <beloep>
-                <beloep>1682</beloep>
+                <beloep>497</beloep>
             </beloep>
         </sumFinanskostnad>
         <sumSkattekostnad>
             <beloep>
-                <beloep>108550</beloep>
+                <beloep>17635</beloep>
             </beloep>
         </sumSkattekostnad>
         <finansinntekt>
@@ -100,7 +100,7 @@
         </skattekostnad>
         <aarsresultat>
             <beloep>
-                <beloep>80159</beloep>
+                <beloep>62524</beloep>
             </beloep>
         </aarsresultat>
     </resultatregnskap>
@@ -215,14 +215,19 @@
                 </beloep>
             </beloep>
         </permanentForskjell>
+        <sumTilleggINaeringsinntekt>
+            <beloep>
+                <beloep>17635</beloep>
+            </beloep>
+        </sumTilleggINaeringsinntekt>
     </forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
     <virksomhet>
         <regnskapspliktstype>
             <regnskapspliktstype>fullRegnskapsplikt</regnskapspliktstype>
         </regnskapspliktstype>
         <regnskapsperiode>
-            <start>2025-01-01T00:00:00.000Z</start>
-            <slutt>2025-12-31T23:59:59.000Z</slutt>
+            <start><dato>2025-01-01</dato></start>
+            <slutt><dato>2025-12-31</dato></slutt>
         </regnskapsperiode>
         <virksomhetstype>
             <virksomhetstype>oevrigSelskap</virksomhetstype>
@@ -242,6 +247,11 @@
                 <beloep>62524</beloep>
             </beloep>
         </sumTilleggIEgenkapital>
+        <sumFradragIEgenkapital>
+            <beloep>
+                <beloep>0</beloep>
+            </beloep>
+        </sumFradragIEgenkapital>
         <egenkapitalendring>
             <id>EK1</id>
             <egenkapitalendringstype>
@@ -250,6 +260,17 @@
             <beloep>
                 <beloep>
                     <beloep>62524</beloep>
+                </beloep>
+            </beloep>
+        </egenkapitalendring>
+        <egenkapitalendring>
+            <id>EK2</id>
+            <egenkapitalendringstype>
+                <egenkapitalendringstype>avsattEllerForventetUtbytte</egenkapitalendringstype>
+            </egenkapitalendringstype>
+            <beloep>
+                <beloep>
+                    <beloep>0</beloep>
                 </beloep>
             </beloep>
         </egenkapitalendring>

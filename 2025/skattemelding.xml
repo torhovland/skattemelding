@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <skattemelding
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v3">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v5">
     <partsnummer>1442927932</partsnummer>
     <inntektsaar>2025</inntektsaar>
     <inntektOgUnderskudd>
@@ -9,19 +9,29 @@
                 <beloepSomHeltall>80159</beloepSomHeltall>
             </naeringsinntekt>
         </inntekt>
+        <inntektFoerFradragForEventueltAvgittKonsernbidrag>
+                <beloepSomHeltall>80159</beloepSomHeltall>
+        </inntektFoerFradragForEventueltAvgittKonsernbidrag>
         <samletInntekt>
             <beloep>
                 <beloepSomHeltall>80159</beloepSomHeltall>
             </beloep>
         </samletInntekt>
-        <samletUnderskudd>
-            <beloep>
+        <tilbakefoertUnderskuddFraForhaandsfastsetting>
+            <tilbakefoertUnderskudd>
                 <beloepSomHeltall>0</beloepSomHeltall>
-            </beloep>
-        </samletUnderskudd>
-        <konsernbidragSkalBekreftesAvRevisor>
-            false
-        </konsernbidragSkalBekreftesAvRevisor>
+            </tilbakefoertUnderskudd>
+            <tilbakefoertUnderskuddForVirksomhetPaaLandOmfattetAvPetroleumsskatteloven>
+                <tilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaarFoertMotAlminneligInntektFraVirksomhetPaaLand>
+                    <beloep>
+                        <beloepSomHeltall>0</beloepSomHeltall>
+                    </beloep>
+                </tilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaarFoertMotAlminneligInntektFraVirksomhetPaaLand>
+                <aaretsAnvendelseAvTilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaar>
+                    <beloepSomHeltall>0</beloepSomHeltall>
+                </aaretsAnvendelseAvTilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaar>
+            </tilbakefoertUnderskuddForVirksomhetPaaLandOmfattetAvPetroleumsskatteloven>
+        </tilbakefoertUnderskuddFraForhaandsfastsetting>
     </inntektOgUnderskudd>
     <formueOgGjeld>
         <formuesobjekt>
