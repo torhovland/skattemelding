@@ -6,15 +6,15 @@
     <inntektOgUnderskudd>
         <inntekt>
             <naeringsinntekt>
-                <beloepSomHeltall>80159</beloepSomHeltall>
+                <beloepSomHeltall>66959</beloepSomHeltall>
             </naeringsinntekt>
         </inntekt>
         <inntektFoerFradragForEventueltAvgittKonsernbidrag>
-                <beloepSomHeltall>80159</beloepSomHeltall>
+                <beloepSomHeltall>66959</beloepSomHeltall>
         </inntektFoerFradragForEventueltAvgittKonsernbidrag>
         <samletInntekt>
             <beloep>
-                <beloepSomHeltall>80159</beloepSomHeltall>
+                <beloepSomHeltall>66959</beloepSomHeltall>
             </beloep>
         </samletInntekt>
         <tilbakefoertUnderskuddFraForhaandsfastsetting>
@@ -45,7 +45,7 @@
         </formuesobjekt>
         <gjeld>
             <annenGjeld>
-                <beloepSomHeltall>17635</beloepSomHeltall>
+                <beloepSomHeltall>27931</beloepSomHeltall>
             </annenGjeld>
         </gjeld>
         <samletVerdiFoerEventuellVerdsettingsrabatt>
@@ -55,7 +55,7 @@
         </samletVerdiFoerEventuellVerdsettingsrabatt>
         <samletGjeld>
             <beloep>
-                <beloepSomHeltall>17635</beloepSomHeltall>
+                <beloepSomHeltall>27931</beloepSomHeltall>
             </beloep>
         </samletGjeld>
     </formueOgGjeld>
@@ -65,7 +65,7 @@
     <verdsettingAvAksje>
         <samletVerdiBakAksjeneISelskapet>
             <beloep>
-                <beloepSomHeltall>391789</beloepSomHeltall>
+                <beloepSomHeltall>381493</beloepSomHeltall>
             </beloep>
         </samletVerdiBakAksjeneISelskapet>
     </verdsettingAvAksje>

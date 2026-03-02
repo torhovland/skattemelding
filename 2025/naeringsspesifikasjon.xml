@@ -27,14 +27,14 @@
         <driftskostnad>
             <sumDriftskostnad>
                 <beloep>
-                    <beloep>923468</beloep>
+                    <beloep>936668</beloep>
                 </beloep>
             </sumDriftskostnad>
             <annenDriftskostnad>
                 <kostnad>
                     <beloep>
                         <beloep>
-                            <beloep>923468</beloep>
+                            <beloep>936668</beloep>
                         </beloep>
                     </beloep>
                     <id>6000</id>
@@ -56,7 +56,7 @@
         </sumFinanskostnad>
         <sumSkattekostnad>
             <beloep>
-                <beloep>17635</beloep>
+                <beloep>14731</beloep>
             </beloep>
         </sumSkattekostnad>
         <finansinntekt>
@@ -89,7 +89,7 @@
             <kostnad>
                 <beloep>
                     <beloep>
-                        <beloep>17635</beloep>
+                        <beloep>14731</beloep>
                     </beloep>
                 </beloep>
                 <id>8300</id>
@@ -100,7 +100,7 @@
         </skattekostnad>
         <aarsresultat>
             <beloep>
-                <beloep>62524</beloep>
+                <beloep>52228</beloep>
             </beloep>
         </aarsresultat>
     </resultatregnskap>
@@ -131,12 +131,12 @@
         <gjeldOgEgenkapital>
             <sumKortsiktigGjeld>
                 <beloep>
-                    <beloep>17635</beloep>
+                    <beloep>27931</beloep>
                 </beloep>
             </sumKortsiktigGjeld>
             <sumEgenkapital>
                 <beloep>
-                    <beloep>391789</beloep>
+                    <beloep>381493</beloep>
                 </beloep>
             </sumEgenkapital>
             <kortsiktigGjeld>
@@ -144,7 +144,7 @@
                     <id>2400</id>
                     <beloep>
                         <beloep>
-                            <beloep>17635</beloep>
+                            <beloep>27931</beloep>
                         </beloep>
                     </beloep>
                     <type>
@@ -160,7 +160,7 @@
                     <id>2050</id>
                     <beloep>
                         <beloep>
-                            <beloep>391789</beloep>
+                            <beloep>381493</beloep>
                         </beloep>
                     </beloep>
                     <type>
@@ -188,18 +188,18 @@
             </kommunenummer>
             <fordeltSkattemessigResultat>
                 <beloep>
-                    <beloep>80159</beloep>
+                    <beloep>52228</beloep>
                 </beloep>
             </fordeltSkattemessigResultat>
             <fordeltSkattemessigResultatEtterKorreksjon>
                 <beloep>
-                    <beloep>80159</beloep>
+                    <beloep>52228</beloep>
                 </beloep>
             </fordeltSkattemessigResultatEtterKorreksjon>
         </fordeltBeregnetNaeringsinntektForUpersonligSkattepliktig>
         <skattemessigResultat>
             <beloep>
-                <beloep>80159</beloep>
+                <beloep>52228</beloep>
             </beloep>
         </skattemessigResultat>
     </beregnetNaeringsinntekt>
@@ -211,13 +211,13 @@
             </permanentForskjellstype>
             <beloep>
                 <beloep>
-                    <beloep>17635</beloep>
+                    <beloep>14731</beloep>
                 </beloep>
             </beloep>
         </permanentForskjell>
         <sumTilleggINaeringsinntekt>
             <beloep>
-                <beloep>17635</beloep>
+                <beloep>14731</beloep>
             </beloep>
         </sumTilleggINaeringsinntekt>
     </forskjellMellomRegnskapsmessigOgSkattemessigVerdi>
@@ -244,7 +244,7 @@
         </inngaaendeEgenkapital>
         <sumTilleggIEgenkapital>
             <beloep>
-                <beloep>62524</beloep>
+                <beloep>52228</beloep>
             </beloep>
         </sumTilleggIEgenkapital>
         <sumFradragIEgenkapital>
@@ -259,7 +259,7 @@
             </egenkapitalendringstype>
             <beloep>
                 <beloep>
-                    <beloep>62524</beloep>
+                    <beloep>52228</beloep>
                 </beloep>
             </beloep>
         </egenkapitalendring>
@@ -276,7 +276,7 @@
         </egenkapitalendring>
         <utgaaendeEgenkapital>
             <beloep>
-                <beloep>361789</beloep>
+                <beloep>351493</beloep>
             </beloep>
         </utgaaendeEgenkapital>
     </egenkapitalavstemming>
