@@ -69,4 +69,9 @@
             </beloep>
         </samletVerdiBakAksjeneISelskapet>
     </verdsettingAvAksje>
+    <gjelderForhaandsfastsetting>
+      <innsendingsformat>
+        <forhaandsfastsettingsformattype>fjoraaretsSkattemelding</forhaandsfastsettingsformattype>
+      </innsendingsformat>
+    </gjelderForhaandsfastsetting>
 </skattemelding>
