@@ -171,13 +171,13 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
                         <type>skattemeldingUpersonlig</type>
                         <encoding>utf-8</encoding>
                         <content>{}</content>
-                        <navneromVedForhaandsfastsetting>urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v4</navneromVedForhaandsfastsetting>
+                        <navneromVedForhaandsfastsetting>urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v5</navneromVedForhaandsfastsetting>
                     </dokument>
                     <dokument>
                         <type>naeringsspesifikasjon</type>
                         <encoding>utf-8</encoding>
                         <content>{}</content>
-                        <navneromVedForhaandsfastsetting>urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v5</navneromVedForhaandsfastsetting>
+                        <navneromVedForhaandsfastsetting>urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v6</navneromVedForhaandsfastsetting>
                     </dokument>
                 </dokumenter>
                 <dokumentreferanseTilGjeldendeDokument>

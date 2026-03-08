@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <skattemelding
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v4">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:skattemelding:upersonlig:ekstern:v5">
     <partsnummer>1442927932</partsnummer>
     <inntektsaar>2025</inntektsaar>
     <inntektOgUnderskudd>
@@ -21,6 +21,16 @@
             <tilbakefoertUnderskudd>
                 <beloepSomHeltall>0</beloepSomHeltall>
             </tilbakefoertUnderskudd>
+            <tilbakefoertUnderskuddForVirksomhetPaaLandOmfattetAvPetroleumsskatteloven>
+                <tilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaarFoertMotAlminneligInntektFraVirksomhetPaaLand>
+                    <beloep>
+                        <beloepSomHeltall>0</beloepSomHeltall>
+                    </beloep>
+                </tilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaarFoertMotAlminneligInntektFraVirksomhetPaaLand>
+                <aaretsAnvendelseAvTilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaar>
+                    <beloepSomHeltall>0</beloepSomHeltall>
+                </aaretsAnvendelseAvTilbakefoertUnderskuddFraVirksomhetPaaLandFraFremtidigInntektsaar>
+            </tilbakefoertUnderskuddForVirksomhetPaaLandOmfattetAvPetroleumsskatteloven>
         </tilbakefoertUnderskuddFraForhaandsfastsetting>
     </inntektOgUnderskudd>
     <formueOgGjeld>
@@ -54,13 +64,13 @@
     </opplysningOmSkattesubjekt>
     <gjelderForhaandsfastsetting>
       <innsendingsformat>
-        <forhaandsfastsettingsformattype>fjoraaretsSkattemelding</forhaandsfastsettingsformattype>
+        <forhaandsfastsettingsformattype>aaretsSkattemelding</forhaandsfastsettingsformattype>
       </innsendingsformat>
     </gjelderForhaandsfastsetting>
     <verdsettingAvAksje>
         <samletVerdiBakAksjeneISelskapet>
             <beloep>
-                <beloepSomHeltall>381493</beloepSomHeltall>
+                <beloepSomHeltall>0</beloepSomHeltall>
             </beloep>
         </samletVerdiBakAksjeneISelskapet>
         <likvidasjonsvederlagVedForhaandsfastsetting>

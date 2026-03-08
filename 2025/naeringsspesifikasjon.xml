@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <naeringsspesifikasjon
-    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v5">
+    xmlns="urn:no:skatteetaten:fastsetting:formueinntekt:naeringsspesifikasjon:ekstern:v6">
     <partsreferanse>1442927932</partsreferanse>
     <inntektsaar>2025</inntektsaar>
     <resultatregnskap>
@@ -37,9 +37,9 @@
                             <beloep>936668</beloep>
                         </beloep>
                     </beloep>
-                    <id>6000</id>
+                    <id>7700</id>
                     <type>
-                        <resultatOgBalanseregnskapstype>6000</resultatOgBalanseregnskapstype>
+                        <resultatOgBalanseregnskapstype>7700</resultatOgBalanseregnskapstype>
                     </type>
                 </kostnad>
             </annenDriftskostnad>
@@ -188,18 +188,18 @@
             </kommunenummer>
             <fordeltSkattemessigResultat>
                 <beloep>
-                    <beloep>52228</beloep>
+                    <beloep>66959</beloep>
                 </beloep>
             </fordeltSkattemessigResultat>
             <fordeltSkattemessigResultatEtterKorreksjon>
                 <beloep>
-                    <beloep>52228</beloep>
+                    <beloep>66959</beloep>
                 </beloep>
             </fordeltSkattemessigResultatEtterKorreksjon>
         </fordeltBeregnetNaeringsinntektForUpersonligSkattepliktig>
         <skattemessigResultat>
             <beloep>
-                <beloep>52228</beloep>
+                <beloep>66959</beloep>
             </beloep>
         </skattemessigResultat>
     </beregnetNaeringsinntekt>
