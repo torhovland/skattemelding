@@ -83,6 +83,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .route("/", get(index))
         .route("/logginn", get(logginn))
         .route("/token", get(token))
+        .route("/klargjor", get(klargjor))
         .route("/altinn", get(altinn))
         .layer(session_layer)
         .with_state(config);
@@ -242,6 +243,83 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
                     validation: &validation,
                     dokumenter,
                     er_fastsatt,
+                })?,
+            )?))
+        }
+        _ => Ok(Html(config.tera.render("guest.html", &Context::new())?)),
+    }
+}
+
+#[debug_handler]
+async fn klargjor(State(config): State<Config>, session: Session) -> Result<Html<String>, AppError> {
+    let access_token: Option<String> = session.get(ACCESS_TOKEN).await?;
+
+    match access_token {
+        Some(access_token) => {
+            let url = format!(
+                "https://idporten.api.skatteetaten.no/api/skattemelding/v2/klargjoerforhaandsfastsetting/{}/{}",
+                config.year, config.org_number
+            );
+
+            tracing::info!("Klargjør forhåndsfastsetting: POST {url}");
+
+            let klargjor_response = http::post(&url, Some(&access_token))
+                .header("Content-Type", "application/json")
+                .send()
+                .await?
+                .text()
+                .await?;
+
+            tracing::info!("Klargjøringsrespons: {klargjor_response}");
+
+            // Etter klargjering, hent gjeldende skattemelding for å sjekke forhaandsfastsettingsformattype
+            let gjeldende = http::get_text(
+                &format!(
+                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/{}/{}",
+                    config.year, config.org_number
+                ),
+                &access_token,
+            )
+            .await;
+
+            let forhaandsfastsettingsformattype = if let Ok(gjeldende) = gjeldende {
+                tracing::info!("Gjeldende etter klargjering: {gjeldende}");
+
+                let gjeldende_xml = to_xml(&gjeldende)?;
+                let skattemeldingdokument = gjeldende_xml
+                    .child("dokumenter")?
+                    .child("skattemeldingdokument")?;
+                let content_base64 = &skattemeldingdokument.child("content")?.text()?;
+                let content = decode(content_base64)?;
+                let content_xml = to_xml(&content)?;
+
+                if let Ok(gjelder_ff) = content_xml.child("gjelderForhaandsfastsetting") {
+                    if let Ok(innsendingsformat) = gjelder_ff.child("innsendingsformat") {
+                        if let Ok(formattype) = innsendingsformat.child("forhaandsfastsettingsformattype") {
+                            Some(formattype.text()?)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            } else {
+                tracing::warn!("Kunne ikkje hente gjeldende etter klargjering: {:?}", gjeldende.err());
+                None
+            };
+
+            let formattype_str = forhaandsfastsettingsformattype
+                .as_deref()
+                .unwrap_or("(ikkje funne)");
+
+            Ok(Html(config.tera.render(
+                "klargjoring.html",
+                &Context::from_serialize(Klargjoring {
+                    klargjor_respons: &klargjor_response,
+                    forhaandsfastsettingsformattype: formattype_str,
                 })?,
             )?))
         }
@@ -450,6 +528,12 @@ struct Validation<'a> {
     validation: &'a str,
     dokumenter: Vec<String>,
     er_fastsatt: bool,
+}
+
+#[derive(Serialize)]
+struct Klargjoring<'a> {
+    klargjor_respons: &'a str,
+    forhaandsfastsettingsformattype: &'a str,
 }
 
 #[derive(Deserialize)]

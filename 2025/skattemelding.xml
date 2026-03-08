@@ -54,7 +54,7 @@
     </opplysningOmSkattesubjekt>
     <gjelderForhaandsfastsetting>
       <innsendingsformat>
-        <forhaandsfastsettingsformattype>aaretsSkattemelding</forhaandsfastsettingsformattype>
+        <forhaandsfastsettingsformattype>fjoraaretsSkattemelding</forhaandsfastsettingsformattype>
       </innsendingsformat>
     </gjelderForhaandsfastsetting>
     <verdsettingAvAksje>
