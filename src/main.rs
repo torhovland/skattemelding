@@ -291,6 +291,7 @@ async fn klargjor(State(config): State<Config>, session: Session) -> Result<Html
                     .child("skattemeldingdokument")?;
                 let content_base64 = &skattemeldingdokument.child("content")?.text()?;
                 let content = decode(content_base64)?;
+                tracing::info!("Dekoda skattemelding frå gjeldende: {content}");
                 let content_xml = to_xml(&content)?;
 
                 if let Ok(gjelder_ff) = content_xml.child("gjelderForhaandsfastsetting") {
