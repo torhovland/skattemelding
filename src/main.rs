@@ -128,22 +128,18 @@ async fn index(State(config): State<Config>, session: Session) -> Result<Html<St
 
             tracing::info!("Gjeldende: {gjeldende}");
 
-            let fastsatt = http::get_text(
-                &format!(
-                    "https://idporten.api.skatteetaten.no/api/skattemelding/v2/fastsatt/{}/{}",
-                    config.year, config.org_number
-                ),
-                &access_token,
-            )
-            .await;
+            let fastsatt_url = format!(
+                "https://idporten.api.skatteetaten.no/api/skattemelding/v2/fastsatt/{}/{}",
+                config.year, config.org_number
+            );
+            let fastsatt_response = http::get(&fastsatt_url, Some(&access_token))
+                .send()
+                .await?;
+            let fastsatt_status = fastsatt_response.status();
+            let fastsatt_body = fastsatt_response.text().await?;
+            tracing::info!("Fastsatt status: {fastsatt_status}, body: {fastsatt_body}");
 
-            let er_fastsatt = if let Ok(fastsatt) = fastsatt {
-                tracing::info!("Fastsatt: {fastsatt}");
-                true
-            } else {
-                tracing::info!("Ingen fastsetting per no.");
-                false
-            };
+            let er_fastsatt = fastsatt_status.is_success();
 
             let gjeldende_xml = to_xml(&gjeldende)?;
             let skattemeldingdokument = gjeldende_xml
