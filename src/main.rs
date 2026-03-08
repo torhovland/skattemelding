@@ -296,7 +296,7 @@ async fn klargjor(State(config): State<Config>, session: Session) -> Result<Html
                 if let Ok(gjelder_ff) = content_xml.child("gjelderForhaandsfastsetting") {
                     if let Ok(innsendingsformat) = gjelder_ff.child("innsendingsformat") {
                         if let Ok(formattype) = innsendingsformat.child("forhaandsfastsettingsformattype") {
-                            Some(formattype.text()?)
+                            Some(formattype.text()?.to_string())
                         } else {
                             None
                         }
