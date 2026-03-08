@@ -332,7 +332,7 @@ async fn logginn(State(config): State<Config>) -> Redirect {
         "https%3A%2F%2Fmac.tail31c54.ts.net%3A443%2Ftoken",
         config.pkce_code_challenge);
     
-    Redirect::permanent(&uri)
+    Redirect::temporary(&uri)
 }
 
 /// Using client defined at
@@ -383,7 +383,7 @@ async fn token(
                         .await?;
                     session.insert(ID_TOKEN, token_response.id_token).await?;
 
-                    Ok(Redirect::permanent("/"))
+                    Ok(Redirect::temporary("/"))
                 }
                 Err(_) => {
                     let error_response: Result<ErrorResponse, _> =
@@ -414,7 +414,7 @@ async fn token(
     }
 }
 
-async fn altinn(State(config): State<Config>, session: Session) -> Result<Redirect, AppError> {
+async fn altinn(State(config): State<Config>, session: Session) -> Result<Html<String>, AppError> {
     let access_token: Option<String> = session.get(ACCESS_TOKEN).await?;
     let konvolutt: Option<String> = session.get(KONVOLUTT).await?;
 
@@ -500,14 +500,20 @@ async fn altinn(State(config): State<Config>, session: Session) -> Result<Redire
 
             tracing::info!("Endre prosess response: {}", endre_prosess_response);
 
-            let url = format!("https://skatt.skatteetaten.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={}", instance.id);
-            tracing::info!("Går til visning på {url}");
+            let visning_url = format!("https://skatt.skatteetaten.no/web/skattemelding-visning/altinn?appId=skd/formueinntekt-skattemelding-v2&instansId={}", instance.id);
+            tracing::info!("Visnings-URL: {visning_url}");
 
-            Ok(Redirect::permanent(&url))
+            Ok(Html(config.tera.render(
+                "altinn.html",
+                &Context::from_serialize(AltinnResult {
+                    instance_id: &instance.id,
+                    visning_url: &visning_url,
+                })?,
+            )?))
         }
         _ => {
             tracing::warn!("Fant ingen access token");
-            Ok(Redirect::permanent("/"))
+            Ok(Html(config.tera.render("guest.html", &Context::new())?))
         }
     }
 }
@@ -531,6 +537,12 @@ struct Validation<'a> {
 struct Klargjoring<'a> {
     klargjor_respons: &'a str,
     forhaandsfastsettingsformattype: &'a str,
+}
+
+#[derive(Serialize)]
+struct AltinnResult<'a> {
+    instance_id: &'a str,
+    visning_url: &'a str,
 }
 
 #[derive(Deserialize)]

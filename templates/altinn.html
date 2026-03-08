@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Skattemelding levering</title>
+    <title>Skattemelding sendt til Altinn</title>
     <meta
       http-equiv="Cache-Control"
       content="no-cache, no-store, must-revalidate"
@@ -9,6 +9,16 @@
     <meta http-equiv="Expires" content="0" />
   </head>
   <body>
-    <p>Du er logga inn i Altinn som {{pid}}.</p>
+    <h2>Skattemelding sendt til Altinn</h2>
+
+    <p>Instansen er oppretta og skattemeldinga er lasta opp. Prosessen er flytta til bekreftelse-steget.</p>
+
+    <p>Instans-ID:</p>
+    <pre>{{instance_id}}</pre>
+
+    <p>Gaa til Skatteetaten si visningsside for aa sjaa og bekrefte:</p>
+    <p><a href="{{visning_url}}">{{visning_url}}</a></p>
+
+    <p><a href="/">Tilbake til startsida</a></p>
   </body>
 </html>
